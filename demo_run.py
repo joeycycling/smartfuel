@@ -65,23 +65,50 @@ def demo():
 
     # --- 4. plan de comidas por día ---
     protein_floor = protein_floor_g(athlete_weight_lb)
+    sessions_by_day = {d["dia"]: d["sesiones"] for d in planned_workouts}
+    daily_plans = {}
     for day in daily_targets:
-        has_wo = bool(daily_burn.get(day))
         plan, diff = build_daily_meal_plan(
-            daily_targets[day], protein_floor, db, prefs, has_workout=has_wo
+            daily_targets[day], protein_floor, db, prefs,
+            day_sessions=sessions_by_day.get(day, [])
         )
+        daily_plans[day] = plan
         print(f"--- {day.upper()} (objetivo {daily_targets[day]} kcal, diferencia real: {diff:.0f}) ---")
         if not plan:
             print("  (no se pudo armar un plan con los datos disponibles)")
             continue
-        for slot, meal in plan.items():
-            unit_symbol = {"gramos": "g", "ml": "ml", "unidad": "ud"}
-            comp_str = ", ".join(
-                f"{c['nombre']} {c['cantidad']}{unit_symbol.get(c['unidad'], c['unidad'])}"
-                for c in meal["componentes"]
-            )
-            print(f"  {slot}: {comp_str} -> {meal['kcal_total']} kcal")
+        unit_symbol = {"gramos": "g", "ml": "ml", "unidad": "ud"}
+        for slot in ["desayuno", "almuerzo", "merienda", "cena"]:
+            meal = plan.get(slot)
+            if not meal:
+                continue
+            comp_a = ", ".join(f"{c['nombre']} {c['cantidad']}{unit_symbol.get(c['unidad'], c['unidad'])}" for c in meal["opcion_a"]["componentes"])
+            print(f"  {slot} A: {comp_a} -> {meal['opcion_a']['kcal_total']} kcal")
+            if meal["opcion_b"] is not meal["opcion_a"]:
+                comp_b = ", ".join(f"{c['nombre']} {c['cantidad']}{unit_symbol.get(c['unidad'], c['unidad'])}" for c in meal["opcion_b"]["componentes"])
+                print(f"  {slot} B: {comp_b} -> {meal['opcion_b']['kcal_total']} kcal")
+        if plan.get("pre_entreno"):
+            comp = ", ".join(f"{c['nombre']} {c['cantidad']}{unit_symbol.get(c['unidad'], c['unidad'])}" for c in plan["pre_entreno"]["componentes"])
+            print(f"  pre_entreno: {comp} -> {plan['pre_entreno']['kcal_total']} kcal")
+        if plan.get("intra_entreno"):
+            print(f"  intra_entreno: {plan['intra_entreno']['texto']}")
+        if plan.get("post_entreno"):
+            comp = ", ".join(f"{c['nombre']} {c['cantidad']}{unit_symbol.get(c['unidad'], c['unidad'])}" for c in plan["post_entreno"]["componentes"])
+            print(f"  post_entreno: {comp} -> {plan['post_entreno']['kcal_total']} kcal")
         print()
+
+    # --- 5. generar PDF ---
+    from pdf_builder import build_weekly_pdf
+    pdf_path = build_weekly_pdf(
+        "demo_plan.pdf",
+        athlete_name="Luis De La Rosa",
+        week_label="20-26 de Julio",
+        daily_targets=daily_targets,
+        daily_plans=daily_plans,
+        daily_burn=daily_burn,
+        phase_info=new_phase_state,
+    )
+    print(f"PDF generado en: {pdf_path}")
 
 
 if __name__ == "__main__":

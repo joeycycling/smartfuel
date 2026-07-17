@@ -4,10 +4,10 @@ Estima el gasto calórico de una sesión planificada (leída de TrainingPeaks).
 """
 
 MET_TABLE = {
-    "suave":      {"bike": 6,  "run": 8,  "swim": 6, "gym": 5},
-    "moderado":   {"bike": 8,  "run": 10, "swim": 8, "gym": 6},
-    "intervalos": {"bike": 10, "run": 12, "swim": 10, "gym": 7},
-    "fondo":      {"bike": 9,  "run": 11, "swim": 9,  "gym": 6},
+    "suave":      {"bike": 6,  "run": 8,  "swim": 6, "gym": 5, "walk": 3.5},
+    "moderado":   {"bike": 8,  "run": 10, "swim": 8, "gym": 6, "walk": 4.3},
+    "intervalos": {"bike": 10, "run": 12, "swim": 10, "gym": 7, "walk": 5},
+    "fondo":      {"bike": 9,  "run": 11, "swim": 9,  "gym": 6, "walk": 4},
 }
 
 

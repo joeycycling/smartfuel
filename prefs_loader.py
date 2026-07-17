@@ -9,6 +9,25 @@ salchicha, salami)"), por lo que NO se puede hacer un split(",") simple.
 """
 import csv
 import io
+import re
+import urllib.request
+
+
+def parse_height_to_cm(raw):
+    """
+    Convierte una altura en formato pies/pulgadas (ej. "5'11", 5'11"",
+    "5 11", "5.11", "5-11") a centímetros. Si solo hay un número, se
+    asume que son pies enteros (ej. "6" -> 6 pies 0 pulgadas).
+    Devuelve None si no se puede parsear.
+    """
+    if not raw:
+        return None
+    numbers = re.findall(r"\d+", raw)
+    if not numbers:
+        return None
+    feet = int(numbers[0])
+    inches = int(numbers[1]) if len(numbers) > 1 else 0
+    return round((feet * 12 + inches) * 2.54, 1)
 
 # Listas de opciones conocidas por pregunta, en el mismo texto exacto
 # que aparece en el form. El orden importa: opciones más largas primero,
@@ -69,6 +88,7 @@ HEADER_MAP = {
     "¿Qué sueles pedir en esos lugares?": "pedidos_habituales",
     "¿Hay algún restaurante que definitivamente evitas?": "restaurantes_evitar",
     "¿Hay algo más sobre tu alimentación o relación con la comida que el coach deba saber?": "notas_adicionales",
+    "Objetivo": "objetivo",  # bajar de peso / mantenimiento / aumento de masa muscular
     "ID_Atleta": "id_atleta",  # columna manual que agrega el coach
 }
 
@@ -128,7 +148,21 @@ def normalize_header(header):
         if "isot" in h or "deportiva" in h:
             return "marca_isotonico"
 
+    if "altura" in h or "estatura" in h or ("height" in h):
+        return "altura_cm"
+
     return header
+
+
+def fetch_preferences_csv(csv_url):
+    """
+    Descarga el CSV publicado del Google Form/Sheet en vivo y devuelve
+    la lista de preferencias ya parseadas (mismo formato que
+    load_preferences_from_csv).
+    """
+    with urllib.request.urlopen(csv_url, timeout=15) as response:
+        raw = response.read().decode("utf-8")
+    return load_preferences_from_csv(raw)
 
 
 def load_preferences_from_csv(csv_text):
@@ -151,6 +185,7 @@ def load_preferences_from_csv(csv_text):
         parsed["tiene_potometro"] = parsed.get("tiene_potometro", "").strip().lower() == "si"
         parsed["usa_proteina_polvo"] = parsed.get("usa_proteina_polvo", "").strip().lower() == "si"
         parsed["usa_isotonico"] = parsed.get("usa_isotonico", "").strip().lower() == "si"
+        parsed["altura_cm"] = parse_height_to_cm(parsed.get("altura_cm"))
 
         results.append(parsed)
     return results

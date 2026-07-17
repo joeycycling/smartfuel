@@ -5,7 +5,7 @@ Carga y consulta la base de datos de alimentos de SmartFuel.
 import csv
 import os
 
-DEFAULT_CSV_PATH = os.path.join(os.path.dirname(__file__), "alimentos.csv")
+DEFAULT_CSV_PATH = os.path.join(os.path.dirname(__file__), "data", "alimentos.csv")
 
 
 def load_food_db(csv_path=DEFAULT_CSV_PATH):
