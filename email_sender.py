@@ -14,7 +14,7 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 
 SMTP_HOST = "smtpout.secureserver.net"
-SMTP_PORT = 465  # SSL directo (alternativa: 587 con STARTTLS si 465 falla)
+SMTP_PORT = 587  # STARTTLS (cambiado de 465/SSL porque Railway bloqueaba esa conexión)
 
 
 def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
@@ -47,6 +47,7 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
         )
         msg.attach(part)
 
-    with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as server:
+        server.starttls()
         server.login(user, password)
         server.sendmail(user, athlete_email, msg.as_string())

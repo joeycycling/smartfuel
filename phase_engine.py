@@ -116,6 +116,15 @@ OCCUPATIONAL_ACTIVITY_FACTOR = {
 }
 DEFAULT_ACTIVITY_FACTOR = 1.3  # si no se sabe el nivel de actividad diaria
 
+# Ajuste inmediato sobre el TDEE de arranque, según objetivo — para no
+# esperar 2 semanas de tendencia antes de aplicar el primer déficit/superávit
+# (igual que tu metodología real, donde la Fase 1 ya arranca ajustada).
+INITIAL_ADJUSTMENT_BY_OBJETIVO = {
+    "bajar de peso": -0.15,
+    "mantenimiento": 0.0,
+    "aumento de masa muscular": 0.10,
+}
+
 
 def compute_bmr_mifflin(weight_kg, height_cm, age, gender):
     """
@@ -129,11 +138,13 @@ def compute_bmr_mifflin(weight_kg, height_cm, age, gender):
 
 
 def compute_initial_kcal(weight_kg, height_cm, age, gender, actividad_diaria,
-                          avg_daily_training_kcal=0):
+                          avg_daily_training_kcal=0, objetivo=None):
     """
     Punto de partida de kcal para un atleta SIN fase previa:
     TDEE = BMR (Mifflin-St Jeor) x factor de actividad ocupacional
            + promedio diario de kcal quemadas en entreno
+    Luego se aplica un ajuste inmediato según objetivo (ej. -15% si es
+    "bajar de peso"), para no esperar 2 semanas al primer ajuste de fase.
 
     El entreno se suma aparte (no dentro del factor de actividad) porque
     ya lo calculamos de forma específica por sesión en workout_kcal.py —
@@ -141,4 +152,9 @@ def compute_initial_kcal(weight_kg, height_cm, age, gender, actividad_diaria,
     """
     bmr = compute_bmr_mifflin(weight_kg, height_cm, age, gender)
     factor = OCCUPATIONAL_ACTIVITY_FACTOR.get(actividad_diaria, DEFAULT_ACTIVITY_FACTOR)
-    return round(bmr * factor + avg_daily_training_kcal)
+    tdee = bmr * factor + avg_daily_training_kcal
+
+    objetivo_key = (objetivo or "").strip().lower()
+    ajuste = INITIAL_ADJUSTMENT_BY_OBJETIVO.get(objetivo_key, INITIAL_ADJUSTMENT_BY_OBJETIVO["bajar de peso"])
+
+    return round(tdee * (1 + ajuste))

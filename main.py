@@ -89,6 +89,7 @@ def process_athlete(page, athlete_prefs, db):
             athlete_weight_kg, altura_cm, age, gender,
             athlete_prefs.get("actividad_diaria"),
             avg_daily_training_kcal,
+            objetivo=objetivo,
         )
 
         phase_state = get_phase_state(athlete_id, default_kcal=default_kcal)
