@@ -1,0 +1,79 @@
+categoria,alimento,unidad_medida,cantidad_base,kcal,proteina_g,carbohidratos_g,grasa_g,notas
+proteina,Pechuga de pollo horneada,gramos,100,141,30.5,0,1,derivado del PDF
+proteina,Carne molida de res (95/5),gramos,100,176,30.5,0,6,derivado del PDF
+proteina,Filete de cerdo horneado,gramos,100,156,22,0,7.5,derivado del PDF
+proteina,Salmón horneado,gramos,100,182,25,0,8,derivado del PDF
+proteina,Huevo grande,unidad,1,70,6,0.6,5,estándar
+proteina,Jamón de pavo,gramos,100,114,23,0,1.4,derivado del PDF
+proteina,Salchicha de pollo (Bravo),unidad,1,82,13.5,1,2.5,derivado del PDF
+carbohidrato,Batata,gramos,100,100,2,23,0,derivado del PDF (redondeado)
+carbohidrato,Arroz blanco cocido,gramos,100,130,2.7,28,0.3,estándar
+carbohidrato,Legumbres/habichuelas cocidas,gramos,100,130,8.7,23,0.5,estándar
+carbohidrato,Guineo verde hervido,gramos,100,120,0.6,31.7,0,derivado del PDF
+carbohidrato,Avena cruda,gramos,100,389,17,66,7,estándar (peso crudo)
+carbohidrato,Pasta cruda,gramos,100,371,13,75,1.5,estándar (peso crudo)
+carbohidrato,Papa horneada,gramos,100,110,2,25,0,estimado (ajustar según prep)
+carbohidrato,Corn flakes,gramos,100,353,7.8,83.8,0,derivado del PDF
+carbohidrato,Pan Nature's Own (Thick Cut),unidad,1,115,4.5,22,2.5,derivado del PDF (por rebanada)
+carbohidrato,Rice cake,unidad,1,32,1.25,5.5,0.4,derivado del PDF
+carbohidrato,Bagel mini (mitad),unidad,1,118,5,23.5,1,derivado del PDF
+carbohidrato,Mix pancake Kodiak,gramos,100,367,28,57,5,derivado del PDF
+carbohidrato,Tortilla Maria estilo burrito,unidad,1,220,4.6,34,7,derivado del PDF
+lacteo,Queso feta,gramos,100,264,14,4,21,estándar
+lacteo,Queso ricotta,gramos,100,174,11,3,13,estándar
+lacteo,Queso parmesano,gramos,100,431,38,4,29,estándar
+lacteo,Yogurt griego Chobani 0%,gramos,100,60,10,3.6,0,estándar
+lacteo,Leche de almendras sin azúcar,ml,100,15,0.5,0.3,1.3,estándar
+suplemento,Proteína Isopure (scoop),unidad,1,100,25,1,1,estándar (scoop 30g)
+extra,Miel/mermelada,gramos,100,290,0,75,0,estándar
+extra,Espinaca cruda,gramos,100,23,2.9,3.6,0.4,estándar
+fruta,Fresas,gramos,100,32,0.7,7.7,0.3,estándar
+fruta,Blueberries,gramos,100,57,0.7,14.5,0.3,estándar
+fruta,Uvas,gramos,100,69,0.7,18,0.2,estándar
+fruta,Mandarina,gramos,100,53,0.8,13.3,0.3,estándar
+fruta,Piña,gramos,100,50,0.5,13,0.1,estándar
+fruta,Melón,gramos,100,34,0.8,8,0.2,estándar
+fruta,Guineo (banana),gramos,100,89,1.1,23,0.3,estándar
+fruta,Kiwi,gramos,100,61,1.1,15,0.5,estándar
+fruta,Sandía,gramos,100,30,0.6,8,0.2,estándar
+fruta,Lechoza,gramos,100,43,0.5,11,0.3,estándar
+proteina,Tilapia (cocida),gramos,100,128,26,0,2.7,USDA
+proteina,Camarones (cocidos),gramos,100,99,24,0,1,USDA/consenso web
+proteina,Atún en agua enlatado (escurrido),gramos,100,116,26,0,1,estándar
+proteina,Pavo molido (cocido),gramos,100,200,27,0,9,estándar (mezcla pechuga/muslo)
+carbohidrato,Yuca hervida,gramos,100,130,1.5,28,0.3,promedio de fuentes consultadas
+carbohidrato,Arroz integral cocido,gramos,100,120,2.6,25,1,USDA
+carbohidrato,Quinoa cocida,gramos,100,120,4.4,21,1.9,USDA
+carbohidrato,Pan integral,gramos,100,247,13,41,3.5,estándar
+grasa_saludable,Aguacate,gramos,100,160,2,8.5,15,USDA
+grasa_saludable,Almendras,gramos,100,579,21,22,50,estándar
+grasa_saludable,Aceite de oliva,ml,100,884,0,0,100,estándar
+vegetal,Brócoli cocido,gramos,100,35,2.4,7,0.4,estándar
+restaurante,Pica pollo (2-3 piezas sin acompañantes),unidad,1,450,35,15,28,estimado - alto en sodio; ajustar con reporte real
+restaurante,Chicharrón de pollo (porción),unidad,1,293,30,11,14,fuente: recetario dominicano
+restaurante,Subway 6 pulgadas pollo a la plancha (pan integral),unidad,1,320,25,40,6,fuente: Subway/agregadores nutricionales
+restaurante,McDonald's Big Mac,unidad,1,550,25,45,29,fuente: McDonald's/agregadores nutricionales
+restaurante,Pollo a la brasa (1/4 sin piel),unidad,1,250,40,0,9,ESTIMADO - ajustar con respuesta real del atleta
+restaurante,Plato criollo (proteína+arroz+habichuelas+ensalada),unidad,1,550,35,60,15,ESTIMADO - ajustar con respuesta real del atleta
+restaurante,Ensalada con proteína a la parrilla (grande),unidad,1,400,35,20,18,ESTIMADO - ajustar con respuesta real del atleta
+restaurante,KFC pieza de pollo original (pechuga),unidad,1,320,30,11,17,fuente: agregadores nutricionales KFC
+carbohidrato,Mangú (puré de plátano verde con aceite),gramos,100,130,1,29,2,derivado de fuentes dominicanas
+carbohidrato,Tostones,gramos,100,144,1.3,31,4,promedio de fuentes consultadas
+proteina,Salami dominicano (frito),gramos,100,336,15,2,26,estándar (salami genérico)
+lacteo,Queso de freír dominicano,gramos,100,318,17.5,2.5,23.5,fuente: Venelac
+lacteo,Leche entera,ml,100,61,3.2,4.8,3.3,estándar
+lacteo,Leche descremada,ml,100,34,3.4,5,0.1,estándar
+grasa_saludable,Maní/cacahuate,gramos,100,567,25,16,49,estándar
+grasa_saludable,Nueces,gramos,100,654,15,14,65,estándar
+grasa_saludable,Mantequilla de maní,gramos,100,588,25,20,50,estándar
+vegetal,Zanahoria cruda,gramos,100,41,0.9,10,0.2,estándar
+vegetal,Tomate,gramos,100,18,0.9,3.9,0.2,estándar
+vegetal,Cebolla,gramos,100,40,1.1,9.3,0.1,estándar
+vegetal,Lechuga,gramos,100,15,1.4,2.9,0.2,estándar
+vegetal,Pepino,gramos,100,15,0.65,3.6,0.1,estándar
+fruta,Mango,gramos,100,60,0.8,15,0.4,estándar
+fruta,Guayaba,gramos,100,68,2.6,14,1,estándar
+fruta,Naranja,gramos,100,47,0.9,12,0.1,estándar
+fruta,Limón,gramos,100,29,1.1,9,0.3,estándar
+
+
