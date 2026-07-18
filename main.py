@@ -8,8 +8,8 @@ por correo.
 Variables de entorno esperadas (configurar en Railway):
     TP_EMAIL           - email de la cuenta de coach en TrainingPeaks
     TP_PASSWORD        - contraseña de esa cuenta
-    EMAIL_USER         - info@joeycycling.com
-    EMAIL_PASSWORD     - contraseña del buzón de GoDaddy
+    RESEND_API_KEY     - API key de tu cuenta de Resend (para el correo)
+    EMAIL_FROM         - remitente verificado en Resend (ej. info@joeycycling.com)
     PREFS_CSV_URL      - link del CSV publicado del Google Form/Sheet
 """
 import os
