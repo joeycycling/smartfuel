@@ -13,6 +13,7 @@ Variables de entorno esperadas (configurar en Railway):
     PREFS_CSV_URL      - link del CSV publicado del Google Form/Sheet
 """
 import os
+import sys
 import time
 import traceback
 from datetime import datetime
@@ -149,12 +150,12 @@ def run_weekly_job():
 
 
 if __name__ == "__main__":
-    schedule.every().saturday.at("12:00").do(run_weekly_job)
-
-    print("SmartFuel Bot corriendo — esperando al sábado 12:00PM...")
-    # Descomenta la siguiente línea para probar de inmediato sin esperar al sábado:
-    # run_weekly_job()
-
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+    if "--run-now" in sys.argv:
+        run_weekly_job()
+        print("Corrida manual terminada.")
+    else:
+        schedule.every().saturday.at("12:00").do(run_weekly_job)
+        print("SmartFuel Bot corriendo — esperando al sábado 12:00PM...")
+        while True:
+            schedule.run_pending()
+            time.sleep(60)
