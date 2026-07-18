@@ -22,6 +22,7 @@ import os
 import json
 import base64
 import urllib.request
+import urllib.error
 
 RESEND_API_URL = "https://api.resend.com/emails"
 
@@ -66,6 +67,10 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
         method="POST",
     )
 
-    with urllib.request.urlopen(req, timeout=30) as response:
-        if response.status not in (200, 201):
-            raise Exception(f"Resend devolvió status {response.status}")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status not in (200, 201):
+                raise Exception(f"Resend devolvió status {response.status}")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="ignore")
+        raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
