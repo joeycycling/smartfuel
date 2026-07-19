@@ -63,6 +63,7 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": "SmartFuelBot/1.0 (+https://joeycycling.com)",
         },
         method="POST",
     )
