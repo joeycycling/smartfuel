@@ -3,7 +3,9 @@ meal_planner.py
 Distribución diaria de kcal + selección/escalado de comidas dentro de un margen.
 """
 import random
-from food_db import scale_food, by_category
+import json
+import os
+from food_db import scale_food, by_category, get
 
 MARGIN_KCAL = 150
 MAX_ATTEMPTS = 5
@@ -11,6 +13,23 @@ SCALE_MIN, SCALE_MAX = 0.5, 2.2
 
 # reparto simple de kcal/proteína entre comidas del día (ajustable)
 MEAL_SPLIT = {"desayuno": 0.25, "almuerzo": 0.35, "merienda": 0.10, "cena": 0.30}
+
+# Matriz de combinaciones aprobadas por el coach (proteína -> carbs compatibles).
+# Generada desde el Excel que Joey marca a mano — si una proteína no aparece
+# ahí, no se restringe (se permite cualquier carb de su categoría).
+COMBINACIONES_PATH = os.path.join(os.path.dirname(__file__), "data", "combinaciones.json")
+try:
+    with open(COMBINACIONES_PATH, encoding="utf-8") as f:
+        COMBINACIONES = json.load(f)
+except FileNotFoundError:
+    COMBINACIONES = {}
+
+# Regla especial: las legumbres/habichuelas NUNCA se eligen como el carb
+# principal — solo como acompañante fijo cuando el carb principal es arroz
+# blanco (ej. 150g arroz + 60g habichuelas + proteína), igual que en la vida real.
+HABICHUELAS_NOMBRE = "legumbres/habichuelas cocidas"
+ARROZ_BLANCO_NOMBRE = "arroz blanco cocido"
+HABICHUELAS_SIDE_G = 60
 
 
 def build_daily_targets(daily_burn, weekly_avg_kcal):
@@ -63,7 +82,20 @@ def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g
         return None
 
     proteina = random.choice(proteinas_libres)
-    carb = random.choice(carbs_libres)
+
+    # Filtrar carbs por la matriz de combinaciones aprobadas para esta proteína
+    # (si no hay entrada para esta proteína en la matriz, no se restringe).
+    compatibles = COMBINACIONES.get(proteina["nombre"].lower())
+    carbs_candidatos = carbs_libres
+    if compatibles:
+        filtrados = [c for c in carbs_libres if c["nombre"].lower() in compatibles]
+        carbs_candidatos = filtrados or carbs_libres
+
+    # Las habichuelas/legumbres nunca son el carb principal — solo acompañante del arroz.
+    solo_no_habichuelas = [c for c in carbs_candidatos if c["nombre"].lower() != HABICHUELAS_NOMBRE]
+    carbs_candidatos = solo_no_habichuelas or carbs_candidatos
+
+    carb = random.choice(carbs_candidatos)
 
     protein_amount = (target_protein_g / proteina["proteina_g"]) * proteina["cantidad_base"] \
         if proteina["proteina_g"] else proteina["cantidad_base"]
@@ -77,6 +109,15 @@ def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g
 
     componentes = [proteina_scaled, carb_scaled]
     total_kcal = proteina_scaled["kcal"] + carb_scaled["kcal"]
+
+    # Habichuelas/legumbres como acompañante fijo del arroz blanco (nunca solas),
+    # solo si esa combinación está aprobada para esta proteína.
+    if carb["nombre"].lower() == ARROZ_BLANCO_NOMBRE and (not compatibles or HABICHUELAS_NOMBRE in compatibles):
+        habichuelas = get(db, HABICHUELAS_NOMBRE)
+        if habichuelas:
+            habichuelas_scaled = scale_food(habichuelas, HABICHUELAS_SIDE_G)
+            componentes.append(habichuelas_scaled)
+            total_kcal += habichuelas_scaled["kcal"]
 
     # Si aún falta bastante (ej. días de fondo largo), agregar un tercer
     # componente de grasa saludable en vez de forzar cantidades irreales
