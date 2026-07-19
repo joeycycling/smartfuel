@@ -1,0 +1,444 @@
+[
+  {
+    "nombre": "Pasta Pomodoro con Carne Molida",
+    "kcal_base": 587,
+    "proteina_g": 59,
+    "carbohidratos_g": 55,
+    "grasa_g": 14,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa de tomate (pomodoro)",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano rallado",
+        "cantidad": 10,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Bacon Cheeseburger",
+    "kcal_base": 690,
+    "proteina_g": 43,
+    "carbohidratos_g": 25,
+    "grasa_g": 46,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pan de hamburguesa (brioche)",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Carne molida de res (80/20)",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso cheddar",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Bacon",
+        "cantidad": 16,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Lechuga, tomate, salsas",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Burrito de Pollo",
+    "kcal_base": 750,
+    "proteina_g": 66,
+    "carbohidratos_g": 84,
+    "grasa_g": 14,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Tortilla de harina grande",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Frijoles",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso rallado",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pico de gallo",
+        "cantidad": 30,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Tacos de Carne Molida (3ud)",
+    "kcal_base": 620,
+    "proteina_g": 58,
+    "carbohidratos_g": 48,
+    "grasa_g": 23,
+    "alergenos": [
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Tortillas de maíz pequeñas",
+        "cantidad": 3,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Queso rallado",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Lechuga, tomate, cebolla",
+        "cantidad": 40,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Crema/guacamole",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Chicken Fajita Bowl",
+    "kcal_base": 666,
+    "proteina_g": 59,
+    "carbohidratos_g": 56,
+    "grasa_g": 22,
+    "alergenos": [
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pimientos y cebolla salteados",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Frijoles negros",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso rallado",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Pollo Guisado con Arroz y Habichuelas",
+    "kcal_base": 767,
+    "proteina_g": 74,
+    "carbohidratos_g": 70,
+    "grasa_g": 18,
+    "alergenos": [],
+    "ingredientes": [
+      {
+        "nombre": "Pollo guisado",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Habichuelas guisadas",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada verde",
+        "cantidad": 60,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Salmón con Arroz y Vegetales",
+    "kcal_base": 562,
+    "proteina_g": 51,
+    "carbohidratos_g": 35,
+    "grasa_g": 20,
+    "alergenos": [],
+    "ingredientes": [
+      {
+        "nombre": "Salmón horneado",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz integral cocido",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Brócoli y zanahoria salteados",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Turkey Meatloaf con Puré de Papa",
+    "kcal_base": 730,
+    "proteina_g": 57,
+    "carbohidratos_g": 68,
+    "grasa_g": 25,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pavo molido (meatloaf)",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Puré de papa",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales al vapor",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Shrimp Stir Fry con Arroz",
+    "kcal_base": 484,
+    "proteina_g": 50,
+    "carbohidratos_g": 49,
+    "grasa_g": 11,
+    "alergenos": [
+      "mariscos"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones salteados",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales salteados (soya)",
+        "cantidad": 120,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Chicken Quesadilla",
+    "kcal_base": 812,
+    "proteina_g": 66,
+    "carbohidratos_g": 70,
+    "grasa_g": 27,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Tortillas de harina grandes",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso rallado",
+        "cantidad": 40,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pico de gallo/crema",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ]
+  },
+  {
+    "nombre": "Bandera Dominicana",
+    "kcal_base": 782,
+    "proteina_g": 69,
+    "carbohidratos_g": 73,
+    "grasa_g": 22,
+    "alergenos": [],
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Habichuelas rojas guisadas",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Carne de res guisada",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada verde con aguacate",
+        "cantidad": 60,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Desayuno Americano",
+    "kcal_base": 600,
+    "proteina_g": 46,
+    "carbohidratos_g": 53,
+    "grasa_g": 25,
+    "alergenos": [
+      "gluten",
+      "lactosa",
+      "huevo"
+    ],
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pancakes (mix Kodiak)",
+        "cantidad": 90,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Syrup sin azúcar (Bravo)",
+        "cantidad": 30,
+        "unidad": "ml"
+      },
+      {
+        "nombre": "Huevos",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Bacon",
+        "cantidad": 24,
+        "unidad": "g"
+      }
+    ]
+  }
+]

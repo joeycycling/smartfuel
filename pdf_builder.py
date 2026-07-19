@@ -448,7 +448,10 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             valor_kcal = f"{opcion_a['kcal_total']:.0f} kcal" if opcion_a else ""
             texto = f"<b>A:</b> {_componentes_str(opcion_a)}" if opcion_a else ""
             if opcion_b and opcion_b is not opcion_a:
-                texto += f"<br/><b>B:</b> {_componentes_str(opcion_b)}"
+                if opcion_b.get("nombre_plato"):
+                    texto += f"<br/><b>B: {opcion_b['nombre_plato']}</b> — {_componentes_str(opcion_b)}"
+                else:
+                    texto += f"<br/><b>B:</b> {_componentes_str(opcion_b)}"
             rows.append([
                 Paragraph(slot_display.get(slot, slot), st["slot_label"]),
                 Paragraph(texto, st["slot_value"]),

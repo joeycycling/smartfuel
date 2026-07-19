@@ -31,6 +31,19 @@ HABICHUELAS_NOMBRE = "legumbres/habichuelas cocidas"
 ARROZ_BLANCO_NOMBRE = "arroz blanco cocido"
 HABICHUELAS_SIDE_G = 60
 
+# Platos compuestos (recetas completas con macros ya calculados) — se usan
+# como una TERCERA opción posible en almuerzo/cena, junto a las combinaciones
+# simples de proteína+carb. No las reemplazan.
+PLATOS_PATH = os.path.join(os.path.dirname(__file__), "data", "platos_compuestos.json")
+try:
+    with open(PLATOS_PATH, encoding="utf-8") as f:
+        PLATOS_COMPUESTOS = json.load(f)
+except FileNotFoundError:
+    PLATOS_COMPUESTOS = []
+
+PLATO_SCALE_MIN, PLATO_SCALE_MAX = 0.6, 1.6
+PROB_PLATO_COMPUESTO = 0.4  # probabilidad de que la Opción B sea un plato compuesto
+
 
 def build_daily_targets(daily_burn, weekly_avg_kcal):
     """
@@ -136,6 +149,55 @@ def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g
     return {
         "componentes": componentes,
         "kcal_total": round(total_kcal, 1),
+    }
+
+
+def _plato_permitido(plato, prefs, slot):
+    if slot not in plato.get("slots", ["almuerzo", "cena"]):
+        return False
+    alergias = set(x.lower() for x in prefs.get("alergias", []))
+    if any(a.lower() in alergias for a in plato.get("alergenos", [])):
+        return False
+    evitar = set(x.lower() for x in prefs.get("alimentos_evitar", []))
+    nombre_lower = plato["nombre"].lower()
+    if any(e and e in nombre_lower for e in evitar):
+        return False
+    return True
+
+
+def build_composed_dish(target_kcal, prefs, slot):
+    """
+    Elige un plato compuesto (receta completa) de la lista aprobada para
+    ESE slot específico (desayuno/almuerzo/cena) y lo escala como receta
+    completa (todos los ingredientes juntos, no cada uno por separado)
+    para acercarse al target_kcal de ESE atleta ese día — cada plato sale
+    personalizado según lo que requiera, dentro de un rango razonable
+    (0.6x-1.6x la porción base) para que siga siendo un plato reconocible.
+    Devuelve None si no hay ningún plato compatible con las preferencias.
+    """
+    candidatos = [p for p in PLATOS_COMPUESTOS if _plato_permitido(p, prefs, slot)]
+    if not candidatos:
+        return None
+
+    plato = random.choice(candidatos)
+    factor = target_kcal / plato["kcal_base"] if plato["kcal_base"] else 1
+    factor = max(PLATO_SCALE_MIN, min(PLATO_SCALE_MAX, factor))
+
+    componentes = []
+    for ing in plato["ingredientes"]:
+        cantidad_escalada = round(ing["cantidad"] * factor, 1)
+        if ing["unidad"] == "ud":
+            cantidad_escalada = max(1, round(cantidad_escalada))
+        unidad_map = {"g": "gramos", "ml": "ml", "ud": "unidad"}
+        componentes.append({
+            "nombre": ing["nombre"], "cantidad": cantidad_escalada,
+            "unidad": unidad_map.get(ing["unidad"], ing["unidad"]),
+        })
+
+    return {
+        "nombre_plato": plato["nombre"],
+        "componentes": componentes,
+        "kcal_total": round(plato["kcal_base"] * factor, 1),
     }
 
 
@@ -274,11 +336,19 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
                 continue
 
             usados = {c["nombre"] for c in opcion_a["componentes"]}
-            opcion_b = build_meal(
-                categoria_proteina, categoria_carb,
-                slot_target_kcal, slot_target_protein, db, prefs,
-                exclude_names=usados,
-            ) or opcion_a  # si no hay más variedad disponible, repite A
+            opcion_b = None
+
+            # A veces la Opción B es un plato compuesto (receta completa)
+            # en vez de la combinación simple proteína+carb.
+            if slot in ("desayuno", "almuerzo", "cena") and not no_puede_cocinar and random.random() < PROB_PLATO_COMPUESTO:
+                opcion_b = build_composed_dish(slot_target_kcal, prefs, slot)
+
+            if not opcion_b:
+                opcion_b = build_meal(
+                    categoria_proteina, categoria_carb,
+                    slot_target_kcal, slot_target_protein, db, prefs,
+                    exclude_names=usados,
+                ) or opcion_a  # si no hay más variedad disponible, repite A
 
             plan[slot] = {"opcion_a": opcion_a, "opcion_b": opcion_b}
             total_kcal_opcion_a += opcion_a["kcal_total"]
