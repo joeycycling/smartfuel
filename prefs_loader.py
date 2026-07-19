@@ -188,7 +188,7 @@ def normalize_header(header):
     if "altura" in h or "estatura" in h or ("height" in h):
         return "altura_cm"
 
-    if "peso inicial" in h or "peso_inicial" in h:
+    if "peso" in h:
         return "peso_inicial_lb"
 
     if "fecha" in h and ("arranque" in h or "inicio" in h):

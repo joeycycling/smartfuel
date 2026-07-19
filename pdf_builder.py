@@ -128,26 +128,27 @@ def _build_cover_page(athlete_name, athlete_info, st):
     story.append(Spacer(1, 20))
 
     header = ["FASE", "FECHA", "PESO", "KCAL", "COMENTARIOS"]
-    hist_rows = [header]
+    hist_cell_style = ParagraphStyle("HistCell", parent=getSampleStyleSheet()["Normal"], fontSize=8, leading=10)
+    hist_header_style = ParagraphStyle("HistHeader", parent=getSampleStyleSheet()["Normal"],
+                                        fontSize=8, leading=10, textColor=colors.white, fontName="Helvetica-Bold")
+    hist_rows = [[Paragraph(h, hist_header_style) for h in header]]
     for entry in athlete_info.get("historial", []):
         hist_rows.append([
-            entry.get("objetivo_label", ""),
-            str(entry.get("fecha", "")),
-            f"{entry.get('peso_lb', '')} lbs",
-            f"{entry.get('kcal', '')} kcal",
-            entry.get("razon", ""),
+            Paragraph(entry.get("objetivo_label", ""), hist_cell_style),
+            Paragraph(str(entry.get("fecha", "")), hist_cell_style),
+            Paragraph(f"{entry.get('peso_lb', '')} lbs", hist_cell_style),
+            Paragraph(f"{entry.get('kcal', '')} kcal", hist_cell_style),
+            Paragraph(entry.get("razon", ""), hist_cell_style),
         ])
 
-    hist_table = Table(hist_rows, colWidths=[1.3 * inch, 0.9 * inch, 0.8 * inch, 0.8 * inch, 1.7 * inch])
+    hist_table = Table(hist_rows, colWidths=[1.1 * inch, 0.75 * inch, 0.7 * inch, 0.7 * inch, 2.45 * inch])
     hist_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), BRAND_DARK),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F7F7F7")]),
     ]))
     story.append(hist_table)
