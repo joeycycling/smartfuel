@@ -31,6 +31,16 @@ HABICHUELAS_NOMBRE = "legumbres/habichuelas cocidas"
 ARROZ_BLANCO_NOMBRE = "arroz blanco cocido"
 HABICHUELAS_SIDE_G = 60
 
+# Mapa de qué alimentos aplican a qué comida del día (desayuno/almuerzo/cena),
+# marcado por el coach. Si un alimento no aparece aquí, se permite en
+# cualquier comida por defecto (ej. frutas, restaurante, suplementos).
+ALIMENTOS_POR_COMIDA_PATH = os.path.join(os.path.dirname(__file__), "data", "alimentos_por_comida.json")
+try:
+    with open(ALIMENTOS_POR_COMIDA_PATH, encoding="utf-8") as f:
+        ALIMENTOS_POR_COMIDA = json.load(f)
+except FileNotFoundError:
+    ALIMENTOS_POR_COMIDA = {}
+
 # Platos compuestos (recetas completas con macros ya calculados) — se usan
 # como una TERCERA opción posible en almuerzo/cena, junto a las combinaciones
 # simples de proteína+carb. No las reemplazan.
@@ -57,16 +67,23 @@ def build_daily_targets(daily_burn, weekly_avg_kcal):
     }
 
 
-def _pick_candidates(db, categoria, prefs):
-    """Filtra alimentos de una categoría respetando preferencias/alergias del atleta."""
+def _pick_candidates(db, categoria, prefs, slot=None):
+    """Filtra alimentos de una categoría respetando preferencias/alergias del atleta
+    y la comida del día (si el alimento tiene reglas marcadas en la bitácora)."""
     candidates = by_category(db, categoria)
     excluded = set(x.lower() for x in prefs.get("alimentos_evitar", []))
     allergens = set(x.lower() for x in prefs.get("alergias", []))
-    return [
+    result = [
         c for c in candidates
         if c["nombre"].lower() not in excluded
         and not any(a in c["nombre"].lower() for a in allergens if a)
     ]
+    if slot:
+        result = [
+            c for c in result
+            if slot in ALIMENTOS_POR_COMIDA.get(c["nombre"].lower(), [slot])
+        ]
+    return result
 
 
 def _clamp_scale(amount, base_amount):
@@ -77,18 +94,20 @@ def _clamp_scale(amount, base_amount):
     return round(base_amount * factor, 1)
 
 
-def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g, db, prefs, exclude_names=None):
+def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g, db, prefs, exclude_names=None, slot=None):
     """
     Arma una comida simple (proteína + carb), escalando cantidades para
     acercarse al target de kcal/proteína de ese slot.
     exclude_names: set opcional de nombres a evitar (para generar una
     segunda opción distinta a la primera).
+    slot: "desayuno"/"almuerzo"/"cena" — filtra alimentos según la bitácora
+    de qué aplica a qué comida (ej. no carne molida en desayuno).
     """
     exclude_names = exclude_names or set()
 
-    proteinas = _pick_candidates(db, categoria_proteina, prefs)
+    proteinas = _pick_candidates(db, categoria_proteina, prefs, slot=slot)
     proteinas_libres = [p for p in proteinas if p["nombre"] not in exclude_names] or proteinas
-    carbs = _pick_candidates(db, categoria_carb, prefs)
+    carbs = _pick_candidates(db, categoria_carb, prefs, slot=slot)
     carbs_libres = [c for c in carbs if c["nombre"] not in exclude_names] or carbs
 
     if not proteinas_libres or not carbs_libres:
@@ -137,7 +156,7 @@ def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g
     # de proteína/carb.
     still_missing = target_kcal - total_kcal
     if still_missing > MARGIN_KCAL:
-        extras = _pick_candidates(db, "grasa_saludable", prefs) or _pick_candidates(db, "lacteo", prefs)
+        extras = _pick_candidates(db, "grasa_saludable", prefs, slot=slot) or _pick_candidates(db, "lacteo", prefs, slot=slot)
         if extras:
             extra = random.choice(extras)
             extra_amount = (still_missing / extra["kcal"]) * extra["cantidad_base"] if extra["kcal"] else 0
@@ -328,9 +347,11 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
             slot_target_kcal = target_kcal * pct
             slot_target_protein = protein_floor_g_val * pct
 
+            slot_filter = slot if slot != "merienda" else None
+
             opcion_a = build_meal(
                 categoria_proteina, categoria_carb,
-                slot_target_kcal, slot_target_protein, db, prefs
+                slot_target_kcal, slot_target_protein, db, prefs, slot=slot_filter
             )
             if not opcion_a:
                 continue
@@ -347,7 +368,7 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
                 opcion_b = build_meal(
                     categoria_proteina, categoria_carb,
                     slot_target_kcal, slot_target_protein, db, prefs,
-                    exclude_names=usados,
+                    exclude_names=usados, slot=slot_filter,
                 ) or opcion_a  # si no hay más variedad disponible, repite A
 
             plan[slot] = {"opcion_a": opcion_a, "opcion_b": opcion_b}
