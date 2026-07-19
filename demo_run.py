@@ -9,7 +9,7 @@ Corre esto para validar la lógica antes de conectar las fuentes reales:
 from datetime import date, timedelta
 
 from food_db import load_food_db
-from phase_engine import update_phase, protein_floor_g
+from phase_engine import update_phase, protein_floor_g, objetivo_label
 from workout_kcal import estimate_week_kcal
 from meal_planner import build_daily_targets, build_daily_meal_plan
 
@@ -28,7 +28,18 @@ def demo():
         "fase_actual": 8,
         "kcal_actual": 2120,
         "fecha_ultimo_cambio": date.today() - timedelta(weeks=3),
+        "fecha_inicio": date(2025, 8, 1),
+        "peso_inicial_lb": 247,
+        "objetivo": "bajar de peso",
+        "historial": [
+            {"fecha": date(2025, 8, 1), "peso_lb": 247, "kcal": 2389, "objetivo_label": "Bajar de Peso", "razon": "arranque"},
+            {"fecha": date(2025, 8, 20), "peso_lb": 244, "kcal": 2195, "objetivo_label": "Bajar de Peso", "razon": "ritmo dentro del objetivo"},
+            {"fecha": date(2025, 9, 3), "peso_lb": 241, "kcal": 2168, "objetivo_label": "Bajar de Peso", "razon": "ritmo dentro del objetivo"},
+            {"fecha": date(2025, 10, 23), "peso_lb": 237, "kcal": 2099, "objetivo_label": "Bajar de Peso", "razon": "ritmo dentro del objetivo"},
+            {"fecha": date(2026, 7, 14), "peso_lb": 219, "kcal": 2120, "objetivo_label": "Bajar de Peso", "razon": "ritmo más lento -> subir kcal"},
+        ],
     }
+    objetivo = "bajar de peso"
 
     # historial de peso de ejemplo (más antiguo -> más reciente)
     weight_history = [
@@ -99,6 +110,19 @@ def demo():
 
     # --- 5. generar PDF ---
     from pdf_builder import build_weekly_pdf
+    athlete_info = {
+        "edad": 29,
+        "estatura_cm": 180,
+        "peso_inicial_lb": phase_state["peso_inicial_lb"],
+        "fecha_inicio": phase_state["fecha_inicio"],
+        "peso_actual_lb": weight_history[-1]["peso_lb"],
+        "fecha_actual": weight_history[-1]["fecha"],
+        "historial": phase_state["historial"],
+    }
+    phase_info_for_pdf = {
+        "objetivo_label": objetivo_label(objetivo),
+        "kcal_actual": new_phase_state["kcal_actual"],
+    }
     pdf_path = build_weekly_pdf(
         "demo_plan.pdf",
         athlete_name="Luis De La Rosa",
@@ -106,7 +130,9 @@ def demo():
         daily_targets=daily_targets,
         daily_plans=daily_plans,
         daily_burn=daily_burn,
-        phase_info=new_phase_state,
+        phase_info=phase_info_for_pdf,
+        athlete_info=athlete_info,
+        sessions_by_day=sessions_by_day,
     )
     print(f"PDF generado en: {pdf_path}")
 

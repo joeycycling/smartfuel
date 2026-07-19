@@ -19,6 +19,18 @@ OBJETIVO_RANGES = {
 }
 DEFAULT_OBJETIVO = "bajar de peso"
 
+# Etiqueta legible para mostrar en el PDF en vez de "Fase 1, 2, 3..."
+OBJETIVO_DISPLAY = {
+    "bajar de peso": "Bajar de Peso",
+    "mantenimiento": "Mantenimiento",
+    "aumento de masa muscular": "Aumento de Masa",
+}
+
+
+def objetivo_label(objetivo):
+    key = (objetivo or "").strip().lower()
+    return OBJETIVO_DISPLAY.get(key, OBJETIVO_DISPLAY[DEFAULT_OBJETIVO])
+
 
 def _get_range(objetivo):
     if not objetivo:

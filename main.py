@@ -27,11 +27,11 @@ from trainingpeaks_client import (
     get_athlete_settings, extract_ftp, extract_age, extract_gender,
 )
 from prefs_loader import fetch_preferences_csv
-from phase_engine import update_phase, protein_floor_g, compute_initial_kcal
+from phase_engine import update_phase, protein_floor_g, compute_initial_kcal, objetivo_label
 from workout_kcal import estimate_week_kcal
 from meal_planner import build_daily_targets, build_daily_meal_plan
 from food_db import load_food_db
-from phase_store import get_phase_state, save_phase_state
+from phase_store import get_phase_state, save_phase_state, append_historial_entry
 from pdf_builder import build_weekly_pdf
 from email_sender import send_weekly_plan_email
 
@@ -92,10 +92,23 @@ def process_athlete(page, athlete_prefs, db):
             objetivo=objetivo,
         )
 
-        phase_state = get_phase_state(athlete_id, default_kcal=default_kcal)
+        phase_state = get_phase_state(
+            athlete_id, default_kcal=default_kcal,
+            peso_inicial_lb=athlete_prefs.get("peso_inicial_lb") or athlete_weight_lb,
+            fecha_inicio=athlete_prefs.get("fecha_inicio_manual") or athlete_prefs.get("fecha_inicio_timestamp"),
+        )
+        kcal_antes = phase_state["kcal_actual"]
         phase_state, reason = update_phase(weight_history, phase_state, objetivo=objetivo)
+
+        # Si es la primera vez (historial vacío) o cambió el kcal, agrega
+        # una fila nueva al historial (igual que las filas F1, F2... de tu PDF)
+        if not phase_state.get("historial") or phase_state["kcal_actual"] != kcal_antes:
+            phase_state = append_historial_entry(
+                phase_state, fecha=weight_history[-1]["fecha"], peso_lb=athlete_weight_lb,
+                kcal=phase_state["kcal_actual"], objetivo_label=objetivo_label(objetivo), razon=reason,
+            )
         save_phase_state(athlete_id, phase_state)
-        print(f"  Fase {phase_state['fase_actual']} | {phase_state['kcal_actual']} kcal | {reason}")
+        print(f"  Fase {objetivo_label(objetivo)} | {phase_state['kcal_actual']} kcal | {reason}")
 
         # 4. Distribución diaria de kcal
         daily_targets = build_daily_targets(daily_burn, phase_state["kcal_actual"])
@@ -115,9 +128,25 @@ def process_athlete(page, athlete_prefs, db):
         week_label = datetime.now().strftime("%d de %B, %Y")
         pdf_filename = f"{athlete_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
         pdf_path = os.path.join(OUTPUT_DIR, pdf_filename)
+
+        athlete_info = {
+            "edad": age,
+            "estatura_cm": altura_cm,
+            "peso_inicial_lb": round(phase_state.get("peso_inicial_lb", athlete_weight_lb), 1),
+            "fecha_inicio": phase_state["fecha_inicio"],
+            "peso_actual_lb": round(athlete_weight_lb, 1),
+            "fecha_actual": weight_history[-1]["fecha"],
+            "historial": phase_state.get("historial", []),
+        }
+        phase_info_for_pdf = {
+            "objetivo_label": objetivo_label(objetivo),
+            "kcal_actual": phase_state["kcal_actual"],
+        }
+
         build_weekly_pdf(
             pdf_path, athlete_name, week_label,
-            daily_targets, daily_plans, daily_burn, phase_state,
+            daily_targets, daily_plans, daily_burn, phase_info_for_pdf,
+            athlete_info=athlete_info, sessions_by_day=sessions_by_day,
         )
 
         # 7. Envío por correo

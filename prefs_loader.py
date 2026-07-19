@@ -11,6 +11,7 @@ import csv
 import io
 import re
 import urllib.request
+from datetime import datetime
 
 
 def parse_height_to_cm(raw):
@@ -28,6 +29,42 @@ def parse_height_to_cm(raw):
     feet = int(numbers[0])
     inches = int(numbers[1]) if len(numbers) > 1 else 0
     return round((feet * 12 + inches) * 2.54, 1)
+
+
+def parse_manual_date(raw):
+    """
+    Parsea la fecha de arranque manual del sheet, probando los formatos
+    más comunes (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD). Devuelve un date
+    o None si no se puede parsear.
+    """
+    if not raw:
+        return None
+    raw = raw.strip()
+    formats = ["%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d", "%m/%d/%y", "%d/%m/%y"]
+    for fmt in formats:
+        try:
+            return datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
+def parse_timestamp_date(raw):
+    """
+    Extrae solo la fecha del Timestamp automático de Google Forms
+    (ej. "7/6/2026 20:48:23" -> date(2026, 7, 6)). Se usa como fallback
+    de fecha_inicio cuando no hay fecha de arranque manual — es más
+    preciso que "hoy", porque refleja cuándo el atleta llenó el form.
+    """
+    if not raw:
+        return None
+    date_part = raw.strip().split(" ")[0]
+    for fmt in ["%m/%d/%Y", "%d/%m/%Y", "%Y-%m-%d"]:
+        try:
+            return datetime.strptime(date_part, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 # Listas de opciones conocidas por pregunta, en el mismo texto exacto
 # que aparece en el form. El orden importa: opciones más largas primero,
@@ -151,6 +188,12 @@ def normalize_header(header):
     if "altura" in h or "estatura" in h or ("height" in h):
         return "altura_cm"
 
+    if "peso inicial" in h or "peso_inicial" in h:
+        return "peso_inicial_lb"
+
+    if "fecha" in h and ("arranque" in h or "inicio" in h):
+        return "fecha_inicio_manual"
+
     return header
 
 
@@ -186,6 +229,12 @@ def load_preferences_from_csv(csv_text):
         parsed["usa_proteina_polvo"] = parsed.get("usa_proteina_polvo", "").strip().lower() == "si"
         parsed["usa_isotonico"] = parsed.get("usa_isotonico", "").strip().lower() == "si"
         parsed["altura_cm"] = parse_height_to_cm(parsed.get("altura_cm"))
+        parsed["fecha_inicio_manual"] = parse_manual_date(parsed.get("fecha_inicio_manual"))
+        parsed["fecha_inicio_timestamp"] = parse_timestamp_date(parsed.get("timestamp"))
+        try:
+            parsed["peso_inicial_lb"] = float(parsed.get("peso_inicial_lb")) if parsed.get("peso_inicial_lb") else None
+        except ValueError:
+            parsed["peso_inicial_lb"] = None
 
         results.append(parsed)
     return results
