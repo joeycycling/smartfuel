@@ -59,6 +59,7 @@ restaurante,Ensalada con proteína a la parrilla (grande),unidad,1,400,35,20,18,
 restaurante,KFC pieza de pollo original (pechuga),unidad,1,320,30,11,17,fuente: agregadores nutricionales KFC
 carbohidrato,Mangú (puré de plátano verde con aceite),gramos,100,130,1,29,2,derivado de fuentes dominicanas
 carbohidrato,Tostones,gramos,100,144,1.3,31,4,promedio de fuentes consultadas
+proteina,Mero/Basa horneado,gramos,100,120,20,0,4,estándar (pescado blanco magro)
 proteina,Salami dominicano (frito),gramos,100,336,15,2,26,estándar (salami genérico)
 lacteo,Queso de freír dominicano,gramos,100,318,17.5,2.5,23.5,fuente: Venelac
 lacteo,Leche entera,ml,100,61,3.2,4.8,3.3,estándar

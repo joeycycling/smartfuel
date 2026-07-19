@@ -31,6 +31,18 @@ def parse_height_to_cm(raw):
     return round((feet * 12 + inches) * 2.54, 1)
 
 
+def parse_free_text_list(raw):
+    """
+    Convierte un campo de texto libre con varios alimentos separados por
+    coma (ej. "tilapia, atún, quinoa") en una lista de términos limpios,
+    para poder excluirlos uno por uno (antes se comparaba el string
+    completo como si fuera un solo término).
+    """
+    if not raw:
+        return []
+    return [term.strip() for term in raw.replace(" y ", ",").split(",") if term.strip()]
+
+
 def parse_manual_date(raw):
     """
     Parsea la fecha de arranque manual del sheet, probando los formatos
@@ -231,6 +243,7 @@ def load_preferences_from_csv(csv_text):
         parsed["altura_cm"] = parse_height_to_cm(parsed.get("altura_cm"))
         parsed["fecha_inicio_manual"] = parse_manual_date(parsed.get("fecha_inicio_manual"))
         parsed["fecha_inicio_timestamp"] = parse_timestamp_date(parsed.get("timestamp"))
+        parsed["alimentos_evitar"] = parse_free_text_list(parsed.get("alimentos_evitar"))
         try:
             parsed["peso_inicial_lb"] = float(parsed.get("peso_inicial_lb")) if parsed.get("peso_inicial_lb") else None
         except ValueError:

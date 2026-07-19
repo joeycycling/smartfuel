@@ -75,7 +75,7 @@ def _pick_candidates(db, categoria, prefs, slot=None):
     allergens = set(x.lower() for x in prefs.get("alergias", []))
     result = [
         c for c in candidates
-        if c["nombre"].lower() not in excluded
+        if not any(e in c["nombre"].lower() for e in excluded if e)
         and not any(a in c["nombre"].lower() for a in allergens if a)
     ]
     if slot:
