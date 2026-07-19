@@ -94,6 +94,24 @@ def _clamp_scale(amount, base_amount):
     return round(base_amount * factor, 1)
 
 
+EXTRA_SCALE_MIN, EXTRA_SCALE_MAX = 0.05, 1.2
+
+
+def _clamp_scale_extra(amount, base_amount):
+    """
+    Clamp separado para el componente "extra" (grasa saludable/lácteo que
+    se agrega para llenar kcal faltantes). Usa un rango mucho más bajo
+    que _clamp_scale porque son toppings (ej. aguacate, aceite), no una
+    porción completa — sin esto, alimentos muy densos en kcal (aceite,
+    aguacate) terminaban forzados a un mínimo irreal (ej. 50ml de aceite).
+    """
+    if base_amount == 0:
+        return 0
+    factor = amount / base_amount
+    factor = max(EXTRA_SCALE_MIN, min(EXTRA_SCALE_MAX, factor))
+    return round(base_amount * factor, 1)
+
+
 def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g, db, prefs, exclude_names=None, slot=None):
     """
     Arma una comida simple (proteína + carb), escalando cantidades para
@@ -160,7 +178,7 @@ def build_meal(categoria_proteina, categoria_carb, target_kcal, target_protein_g
         if extras:
             extra = random.choice(extras)
             extra_amount = (still_missing / extra["kcal"]) * extra["cantidad_base"] if extra["kcal"] else 0
-            extra_amount = _clamp_scale(extra_amount, extra["cantidad_base"])
+            extra_amount = _clamp_scale_extra(extra_amount, extra["cantidad_base"])
             extra_scaled = scale_food(extra, extra_amount)
             componentes.append(extra_scaled)
             total_kcal += extra_scaled["kcal"]
@@ -223,10 +241,10 @@ def build_composed_dish(target_kcal, prefs, slot):
 # Recomendación de carbohidratos por hora durante el entreno de bici,
 # según intensidad (mismas bandas del PDF original "Training Fuel Trial 4").
 BIKE_CHO_PER_HOUR = {
-    "suave": (20, 30),
-    "moderado": (30, 50),
-    "intervalos": (50, 60),
-    "fondo": (70, 80),
+    "suave": (40, 50),
+    "moderado": (50, 70),
+    "intervalos": (70, 80),
+    "fondo": (90, 100),
 }
 
 
