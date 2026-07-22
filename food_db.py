@@ -19,6 +19,10 @@ CANTIDAD_MAXIMA_REALISTA = {
     "nueces": 40,
     "mantequilla de maní": 32,
     "maní/cacahuate": 40,
+    "huevo grande": 4,
+    "tortilla maria estilo burrito": 2,
+    "rice cake": 4,
+    "bagel mini (mitad)": 2,
 }
 
 

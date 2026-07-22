@@ -5,7 +5,7 @@ Distribución diaria de kcal + selección/escalado de comidas dentro de un marge
 import random
 import json
 import os
-from food_db import scale_food, by_category, get
+from food_db import scale_food, by_category, get, CANTIDAD_MAXIMA_REALISTA
 from phase_engine import classify_day_type
 
 MARGIN_KCAL = 150
@@ -694,16 +694,37 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
 
             for slot_a_reforzar in main_slots_presentes:
                 opcion_a_reforzada = best_plan[slot_a_reforzar]["opcion_a"]
-                for c in opcion_a_reforzada["componentes"]:
-                    if c.get("proteina_g", 0) > 0 and c["unidad"] != "porcion":
+                # Solo se refuerzan componentes que son REALMENTE proteína
+                # (categoría "proteina" en la base) — antes cualquier
+                # alimento con algo de proteína calificaba, inflando carbs
+                # como tortilla o corn flakes que también aportan proteína.
+                candidatos_reforzar = [
+                    c for c in opcion_a_reforzada["componentes"]
+                    if c.get("proteina_g", 0) > 0 and c["unidad"] != "porcion"
+                    and (get(db, c["nombre"]) or {}).get("categoria") == "proteina"
+                ]
+                con_espacio = [
+                    c for c in candidatos_reforzar
+                    if c["cantidad"] < (
+                        CANTIDAD_MAXIMA_REALISTA.get(c["nombre"].lower(), PROTEIN_MAX_GRAMOS_PORCION) * 0.9
+                    )
+                ]
+                objetivo_reforzar = con_espacio or candidatos_reforzar
+
+                for c in objetivo_reforzar[:1]:
+                    if True:
                         factor_extra = 1 + (faltante_por_slot / max(c["proteina_g"], 1))
                         nuevo = dict(c)
                         for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
                             if macro in nuevo:
                                 nuevo[macro] = round(nuevo[macro] * factor_extra, 1)
-                        # Nunca una sola porción de proteína más grande que el tope absoluto
-                        if nuevo["unidad"] == "gramos" and nuevo["cantidad"] > PROTEIN_MAX_GRAMOS_PORCION:
-                            factor_tope = PROTEIN_MAX_GRAMOS_PORCION / nuevo["cantidad"]
+                        # Tope: el más estricto entre el genérico (320g) y el
+                        # específico del alimento (ej. 80g salami, 4ud huevo)
+                        # — se aplica sin importar si es gramos o unidad.
+                        tope_especifico = CANTIDAD_MAXIMA_REALISTA.get(nuevo["nombre"].lower())
+                        tope_aplicable = min(PROTEIN_MAX_GRAMOS_PORCION, tope_especifico) if tope_especifico else PROTEIN_MAX_GRAMOS_PORCION
+                        if nuevo["cantidad"] > tope_aplicable:
+                            factor_tope = tope_aplicable / nuevo["cantidad"]
                             for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
                                 nuevo[macro] = round(nuevo[macro] * factor_tope, 1)
                         opcion_a_reforzada["componentes"][opcion_a_reforzada["componentes"].index(c)] = nuevo
@@ -724,7 +745,10 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
             slot_mas_grande = max(main_slots_presentes, key=lambda s: best_plan[s]["opcion_a"]["kcal_total"])
             proteinas_disponibles = _pick_candidates(db, "proteina", prefs)
             if proteinas_disponibles:
-                extra_proteina = random.choice(proteinas_disponibles)
+                # La más densa en proteína por gramo, no al azar — así el
+                # tope de 320g (o el específico del alimento) casi nunca
+                # se alcanza antes de cerrar el hueco.
+                extra_proteina = max(proteinas_disponibles, key=lambda p: p["proteina_g"] / max(p["cantidad_base"], 1))
                 cantidad_extra = (faltante_final / extra_proteina["proteina_g"]) * extra_proteina["cantidad_base"] \
                     if extra_proteina["proteina_g"] else 0
                 if extra_proteina["unidad_medida"] == "gramos":
