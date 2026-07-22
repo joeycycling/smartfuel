@@ -34,7 +34,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "balanceado"
   },
   {
     "nombre": "Bacon Cheeseburger",
@@ -76,7 +77,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "balanceado"
   },
   {
     "nombre": "Burrito de Pollo",
@@ -123,7 +125,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "balanceado"
   },
   {
     "nombre": "Tacos de Carne Molida (3ud)",
@@ -164,7 +167,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "economico"
   },
   {
     "nombre": "Chicken Fajita Bowl",
@@ -205,7 +209,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "balanceado"
   },
   {
     "nombre": "Pollo Guisado con Arroz y Habichuelas",
@@ -239,7 +244,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "economico"
   },
   {
     "nombre": "Salmón con Arroz y Vegetales",
@@ -268,7 +274,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "premium"
   },
   {
     "nombre": "Turkey Meatloaf con Puré de Papa",
@@ -300,7 +307,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "balanceado"
   },
   {
     "nombre": "Shrimp Stir Fry con Arroz",
@@ -331,7 +339,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "premium"
   },
   {
     "nombre": "Chicken Quesadilla",
@@ -368,7 +377,8 @@
     "slots": [
       "almuerzo",
       "cena"
-    ]
+    ],
+    "costo": "balanceado"
   },
   {
     "nombre": "Bandera Dominicana",
@@ -402,7 +412,8 @@
         "cantidad": 60,
         "unidad": "g"
       }
-    ]
+    ],
+    "costo": "economico"
   },
   {
     "nombre": "Desayuno Americano",
@@ -439,6 +450,7 @@
         "cantidad": 24,
         "unidad": "g"
       }
-    ]
+    ],
+    "costo": "balanceado"
   }
 ]

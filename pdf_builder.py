@@ -4,16 +4,24 @@ Genera el PDF semanal del plan SmartFuel:
   1. Portada estilo "Planificación Alimenticia" (datos del atleta + historial de fases)
   2. Un bloque por día con kcal objetivo, resumen del entreno, y comidas (2 opciones c/u)
   3. Hoja de referencia "Training Fuel" (pre/intra/post-entreno)
+  4. Lista de compras de la semana
 """
+import os
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image, HRFlowable
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.utils import ImageReader
 
-from meal_planner import PRE_WORKOUT_OPTIONS, POST_WORKOUT_OPTIONS, BIKE_CHO_PER_HOUR
+from meal_planner import PRE_WORKOUT_OPTIONS, POST_WORKOUT_OPTIONS, BIKE_CHO_PER_HOUR, CATEGORIAS_ORDEN
+
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
+LOGO_ORANGE = os.path.join(ASSETS_DIR, "logo_orange_transparent.png")
+LOGO_BLACK = os.path.join(ASSETS_DIR, "logo_black_transparent.png")
+LOGO_WHITE = os.path.join(ASSETS_DIR, "logo_white_transparent.png")
 
 DIAS_ES = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
 DIAS_DISPLAY = {
@@ -25,6 +33,24 @@ BRAND_ORANGE = colors.HexColor("#E8722C")
 BRAND_DARK = colors.HexColor("#1B2A4A")
 
 UNIT_SYMBOL = {"gramos": "g", "ml": "ml", "unidad": "ud"}
+
+
+def _logo_image(path=LOGO_ORANGE, width=1.8 * inch):
+    """Imagen del logo escalada proporcionalmente al ancho dado."""
+    reader = ImageReader(path)
+    iw, ih = reader.getSize()
+    height = width * (ih / iw)
+    return Image(path, width=width, height=height)
+
+
+def _add_page_number(canvas, doc):
+    """Footer con número de página y marca de agua discreta del logo."""
+    canvas.saveState()
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColor(colors.HexColor("#999999"))
+    canvas.drawRightString(letter[0] - 0.6 * inch, 0.4 * inch, f"Página {doc.page}")
+    canvas.drawString(0.6 * inch, 0.4 * inch, "SmartFuel by CircuitCycling")
+    canvas.restoreState()
 
 
 def cm_to_feet_inches(cm):
@@ -101,7 +127,7 @@ def _build_cover_page(athlete_name, athlete_info, st):
     vez de números de fase.
     """
     story = [
-        Paragraph("SMARTFUEL", st["title"]),
+        _logo_image(),
         Paragraph("PLANIFICACIÓN ALIMENTICIA", st["subtitle"]),
         Spacer(1, 10),
     ]
@@ -127,21 +153,24 @@ def _build_cover_page(athlete_name, athlete_info, st):
     story.append(info_table)
     story.append(Spacer(1, 20))
 
-    header = ["FASE", "FECHA", "PESO", "KCAL", "COMENTARIOS"]
+    header = ["FASE", "FECHA", "PESO", "% / KCAL PROM.", "COMENTARIOS"]
     hist_cell_style = ParagraphStyle("HistCell", parent=getSampleStyleSheet()["Normal"], fontSize=8, leading=10)
     hist_header_style = ParagraphStyle("HistHeader", parent=getSampleStyleSheet()["Normal"],
                                         fontSize=8, leading=10, textColor=colors.white, fontName="Helvetica-Bold")
     hist_rows = [[Paragraph(h, hist_header_style) for h in header]]
     for entry in athlete_info.get("historial", []):
+        pct = entry.get("deficit_pct")
+        pct_str = f"{pct:+.0%}" if pct is not None else ""
+        kcal_prom = entry.get("kcal_promedio_semana", "")
         hist_rows.append([
             Paragraph(entry.get("objetivo_label", ""), hist_cell_style),
             Paragraph(str(entry.get("fecha", "")), hist_cell_style),
             Paragraph(f"{entry.get('peso_lb', '')} lbs", hist_cell_style),
-            Paragraph(f"{entry.get('kcal', '')} kcal", hist_cell_style),
+            Paragraph(f"{pct_str} (~{kcal_prom} kcal)", hist_cell_style),
             Paragraph(entry.get("razon", ""), hist_cell_style),
         ])
 
-    hist_table = Table(hist_rows, colWidths=[1.1 * inch, 0.75 * inch, 0.7 * inch, 0.7 * inch, 2.45 * inch])
+    hist_table = Table(hist_rows, colWidths=[1.1 * inch, 0.7 * inch, 0.6 * inch, 1.1 * inch, 2.2 * inch])
     hist_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), BRAND_DARK),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
@@ -178,7 +207,7 @@ def _build_training_fuel_page(daily_plans, daily_burn, st):
     día de bici (grs/hora reales según su entreno planificado).
     """
     story = [
-        Paragraph("SMARTFUEL", st["title"]),
+        _logo_image(),
         Paragraph("TRAINING FUEL — Referencia de nutrición para tus entrenos", st["subtitle"]),
         Spacer(1, 4),
     ]
@@ -189,7 +218,7 @@ def _build_training_fuel_page(daily_plans, daily_burn, st):
     story.append(Spacer(1, 4))
     rows = [["Opción", "PRO", "CHO", "GRASA", "KCAL"]]
     for opt in PRE_WORKOUT_OPTIONS:
-        rows.append([opt["nombre"], f"{opt['proteina_g']}g", f"{opt['carbohidratos_g']}g",
+        rows.append([Paragraph(opt["nombre"], st["small_note"]), f"{opt['proteina_g']}g", f"{opt['carbohidratos_g']}g",
                      f"{opt['grasa_g']}g", f"{opt['kcal']}kcal"])
     t = Table(rows, colWidths=[3.9 * inch, 0.6 * inch, 0.6 * inch, 0.7 * inch, 0.9 * inch])
     t.setStyle(TableStyle([
@@ -266,7 +295,7 @@ def _build_training_fuel_page(daily_plans, daily_burn, st):
     story.append(Spacer(1, 4))
     rows = [["Opción", "PRO", "CHO", "GRASA", "KCAL"]]
     for opt in POST_WORKOUT_OPTIONS:
-        rows.append([opt["nombre"], f"{opt['proteina_g']}g", f"{opt['carbohidratos_g']}g",
+        rows.append([Paragraph(opt["nombre"], st["small_note"]), f"{opt['proteina_g']}g", f"{opt['carbohidratos_g']}g",
                      f"{opt['grasa_g']}g", f"{opt['kcal']}kcal"])
     t = Table(rows, colWidths=[3.9 * inch, 0.6 * inch, 0.6 * inch, 0.7 * inch, 0.9 * inch])
     t.setStyle(TableStyle([
@@ -328,9 +357,54 @@ def _build_day_explanation(kcal_obj, avg_semanal, sessions):
         )
 
 
+def _build_shopping_list_page(shopping_list, st):
+    """Hoja final con la lista de compras de la semana, agrupada por categoría."""
+    story = [
+        _logo_image(),
+        Paragraph("LISTA DE COMPRAS DE LA SEMANA", st["subtitle"]),
+        Paragraph(
+            "Cantidades aproximadas sumando la Opción A de cada comida — ajusta según lo que ya tengas en casa.",
+            st["small_note"],
+        ),
+        Spacer(1, 10),
+    ]
+
+    unidad_label = {"gramos": "g", "ml": "ml", "unidad": "ud", "porciones": "porciones"}
+    GRAMOS_POR_LIBRA = 453.592
+
+    for categoria in CATEGORIAS_ORDEN:
+        items = shopping_list.get(categoria, [])
+        if not items:
+            continue
+        story.append(_section_banner(categoria.upper(), st))
+        story.append(Spacer(1, 4))
+        rows = []
+        for nombre, cantidad, unidad in items:
+            cantidad_txt = f"{cantidad}{unidad_label.get(unidad, unidad)}"
+            if unidad == "gramos":
+                libras = cantidad / GRAMOS_POR_LIBRA
+                cantidad_txt += f" (~{libras:.1f} lb)"
+            rows.append([
+                Paragraph(nombre, st["slot_value"]),
+                Paragraph(cantidad_txt, st["slot_value"]),
+            ])
+        t = Table(rows, colWidths=[4.2 * inch, 2.5 * inch])
+        t.setStyle(TableStyle([
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, colors.HexColor("#F7F7F7")]),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 12))
+
+    return story
+
+
 def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
                       daily_plans, daily_burn=None, phase_info=None, athlete_info=None,
-                      sessions_by_day=None):
+                      sessions_by_day=None, daily_deficit=None, alt_plans=None, shopping_list=None):
     """
     daily_targets: {dia: kcal_objetivo}
     daily_plans: {dia: {slot: meal_dict}}  (viene de meal_planner.build_daily_meal_plan)
@@ -339,8 +413,13 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
     athlete_info: dict con edad, estatura_cm, peso_inicial_lb, fecha_inicio,
                   peso_actual_lb, fecha_actual, historial (para la portada)
     sessions_by_day: {dia: [sesiones]} (para explicar el por qué de las kcal)
+    daily_deficit: {dia: kcal_deficit_estimado} (TDEE del día - kcal objetivo)
+    alt_plans: {dia: {"kcal":, "plan":}} — menú alterno por si no entrena ese día
     """
     sessions_by_day = sessions_by_day or {}
+    daily_deficit = daily_deficit or {}
+    alt_plans = alt_plans or {}
+    shopping_list = shopping_list or {}
     doc = SimpleDocTemplate(
         output_path, pagesize=letter,
         topMargin=0.6 * inch, bottomMargin=0.6 * inch,
@@ -354,7 +433,9 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
 
     context_line = f"Semana del {week_label}"
     if phase_info:
-        context_line += f" &nbsp;·&nbsp; Fase {phase_info.get('objetivo_label', '')} ({phase_info.get('kcal_actual')} kcal prom/día)"
+        pct = phase_info.get("deficit_pct")
+        pct_txt = f", {pct:+.0%}" if pct is not None else ""
+        context_line += f" &nbsp;·&nbsp; Fase {phase_info.get('objetivo_label', '')} ({phase_info.get('kcal_actual')} kcal prom/día{pct_txt})"
 
     dias_presentes = [d for d in DIAS_ES if d in daily_targets]
     for idx, dia in enumerate(dias_presentes):
@@ -397,16 +478,30 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             "merienda": colors.HexColor("#6FBF73"), "cena": colors.HexColor("#8E6FBF"),
         }
 
-        # --- Resumen de macros del día (suma de las Opciones A) ---
+        # --- Resumen de macros del día (suma de las Opciones A + fuel de entreno) ---
         tot_p = tot_c = tot_f = 0
         for slot in main_slots:
             meal = plan.get(slot)
             if meal and meal.get("opcion_a"):
                 p, c_, f = _meal_macros(meal["opcion_a"])
                 tot_p += p; tot_c += c_; tot_f += f
+        for fuel_slot in ("pre_entreno", "post_entreno"):
+            fuel_meal = plan.get(fuel_slot)
+            if fuel_meal:
+                p, c_, f = _meal_macros(fuel_meal)
+                tot_p += p; tot_c += c_; tot_f += f
 
         stat_labels = ["KCAL", "PROTEÍNA", "CARBOHIDRATOS", "GRASA"]
         stat_values = [f"{kcal_obj:.0f}", f"{tot_p:.0f}g", f"{tot_c:.0f}g", f"{tot_f:.0f}g"]
+        col_widths = [1.675 * inch] * 4
+
+        deficit_val = daily_deficit.get(dia)
+        if deficit_val is not None:
+            stat_labels.append("DÉFICIT EST.")
+            signo = "+" if deficit_val < 0 else "-" if deficit_val > 0 else ""
+            stat_values.append(f"{signo}{abs(deficit_val):.0f}")
+            col_widths = [1.34 * inch] * 5
+
         stat_row = Table([
             [Paragraph(v, ParagraphStyle("StatVal", parent=getSampleStyleSheet()["Normal"],
                                           fontSize=15, fontName="Helvetica-Bold", textColor=BRAND_ORANGE, alignment=1))
@@ -414,7 +509,7 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             [Paragraph(l, ParagraphStyle("StatLbl", parent=getSampleStyleSheet()["Normal"],
                                           fontSize=7, textColor=colors.HexColor("#666666"), alignment=1))
              for l in stat_labels],
-        ], colWidths=[1.675 * inch] * 4)
+        ], colWidths=col_widths)
         stat_row.setStyle(TableStyle([
             ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
             ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#EEEEEE")),
@@ -446,12 +541,25 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             opcion_a = meal.get("opcion_a")
             opcion_b = meal.get("opcion_b")
             valor_kcal = f"{opcion_a['kcal_total']:.0f} kcal" if opcion_a else ""
-            texto = f"<b>A:</b> {_componentes_str(opcion_a)}" if opcion_a else ""
+            if opcion_a and opcion_a.get("nombre_plato"):
+                texto = f"<b>A: {opcion_a['nombre_plato']}</b>"
+            elif opcion_a:
+                texto = f"<b>A:</b> {_componentes_str(opcion_a)}"
+            else:
+                texto = ""
             if opcion_b and opcion_b is not opcion_a:
                 if opcion_b.get("nombre_plato"):
                     texto += f"<br/><b>B: {opcion_b['nombre_plato']}</b> — {_componentes_str(opcion_b)}"
                 else:
                     texto += f"<br/><b>B:</b> {_componentes_str(opcion_b)}"
+
+            opcion_premium = meal.get("opcion_premium")
+            if opcion_premium:
+                if opcion_premium.get("nombre_plato"):
+                    texto += f"<br/><font color='#B8860B'><b>Premium: {opcion_premium['nombre_plato']}</b> — {_componentes_str(opcion_premium)}</font>"
+                else:
+                    texto += f"<br/><font color='#B8860B'><b>Premium:</b> {_componentes_str(opcion_premium)}</font>"
+
             rows.append([
                 Paragraph(slot_display.get(slot, slot), st["slot_label"]),
                 Paragraph(texto, st["slot_value"]),
@@ -509,6 +617,50 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             ]))
             story.append(fuel_table)
 
+        alt = alt_plans.get(dia)
+        if alt:
+            story.append(Spacer(1, 10))
+            alt_header = Table([[Paragraph(
+                f"¿NO VAS A PODER ENTRENAR HOY? — Usa este menú en su lugar ({alt['kcal']:.0f} kcal)",
+                ParagraphStyle("AltHeader", parent=getSampleStyleSheet()["Normal"], fontSize=9,
+                               textColor=colors.white, fontName="Helvetica-Bold"),
+            )]], colWidths=[6.7 * inch])
+            alt_header.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), BRAND_DARK),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ]))
+            story.append(alt_header)
+            story.append(Paragraph(
+                "Se mantiene tu proteína alta (igual que un día normal) — lo que baja son "
+                "principalmente los carbohidratos, ya que sin el gasto del entreno no hace falta "
+                "reponer esa energía extra.",
+                ParagraphStyle("AltNote", parent=getSampleStyleSheet()["Normal"], fontSize=8,
+                               textColor=colors.HexColor("#666666"), fontName="Helvetica-Oblique",
+                               spaceBefore=4, spaceAfter=4),
+            ))
+            alt_rows = []
+            for alt_slot in ("desayuno", "almuerzo", "merienda", "cena"):
+                alt_meal = (alt["plan"] or {}).get(alt_slot, {}).get("opcion_a")
+                if not alt_meal:
+                    continue
+                nombre_alt = alt_meal.get("nombre_plato") or _componentes_str(alt_meal)
+                alt_rows.append([
+                    Paragraph(slot_display.get(alt_slot, alt_slot), st["slot_label"]),
+                    Paragraph(nombre_alt, st["slot_value"]),
+                    Paragraph(f"{alt_meal['kcal_total']:.0f} kcal", st["slot_value"]),
+                ])
+            if alt_rows:
+                alt_table = Table(alt_rows, colWidths=[1.5 * inch, 4.3 * inch, 0.9 * inch])
+                alt_table.setStyle(TableStyle([
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.HexColor("#EFEFEF"), colors.white]),
+                ]))
+                story.append(alt_table)
+
         story.append(Spacer(1, 12))
         tip = DAILY_TIPS[idx % len(DAILY_TIPS)]
         story.append(Paragraph(f"Tip: {tip}", ParagraphStyle(
@@ -520,5 +672,9 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
 
     story.extend(_build_training_fuel_page(daily_plans, daily_burn, st))
 
-    doc.build(story)
+    if any(shopping_list.values()):
+        story.append(PageBreak())
+        story.extend(_build_shopping_list_page(shopping_list, st))
+
+    doc.build(story, onFirstPage=_add_page_number, onLaterPages=_add_page_number)
     return output_path

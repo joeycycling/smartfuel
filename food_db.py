@@ -7,6 +7,20 @@ import os
 
 DEFAULT_CSV_PATH = os.path.join(os.path.dirname(__file__), "data", "alimentos.csv")
 
+# Límite máximo realista de porción para alimentos muy densos en grasa/kcal —
+# sin esto, el escalado matemático podía pedir cantidades absurdas
+# (ej. 300g de aceite) solo para cuadrar las kcal. Estos topes ganan
+# siempre sobre cualquier cálculo de escalado.
+CANTIDAD_MAXIMA_REALISTA = {
+    "salami dominicano (frito)": 80,
+    "aceite de oliva": 20,
+    "aguacate": 100,
+    "almendras": 40,
+    "nueces": 40,
+    "mantequilla de maní": 32,
+    "maní/cacahuate": 40,
+}
+
 
 def load_food_db(csv_path=DEFAULT_CSV_PATH):
     """Carga el CSV de alimentos en un dict indexado por nombre (lowercase)."""
@@ -44,10 +58,19 @@ def scale_food(item, target_amount):
     Escala un alimento a una cantidad objetivo (gramos o unidades),
     devolviendo sus macros ajustados. Los alimentos por 'unidad'
     (huevos, pan, tortillas, etc.) se redondean a números enteros
-    sensatos (mínimo 1) para que la porción tenga sentido real.
+    sensatos (mínimo 1). Los de gramos/ml se redondean a múltiplos de 25
+    (mínimo 5) para que la porción sea práctica de preparar/pesar en casa,
+    en vez de números como "163.4g". Los alimentos densos en grasa tienen
+    además un tope máximo realista (ver CANTIDAD_MAXIMA_REALISTA).
     """
     if item["unidad_medida"] == "unidad":
         target_amount = max(1, round(target_amount))
+    else:
+        target_amount = max(5, round(target_amount / 25) * 25)
+
+    maximo = CANTIDAD_MAXIMA_REALISTA.get(item["nombre"].lower())
+    if maximo is not None:
+        target_amount = min(target_amount, maximo)
 
     factor = target_amount / item["cantidad_base"] if item["cantidad_base"] else 0
     return {

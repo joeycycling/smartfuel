@@ -1,9 +1,8 @@
 """
 phase_store.py
-Guarda/lee el estado de fase de cada atleta (fase actual, kcal, fecha del
-último cambio), el peso/fecha de arranque del programa, y el historial
-completo de cambios de fase (para mostrar en el PDF, como la tabla de
-fases de tu PDF original).
+Guarda/lee el estado de fase de cada atleta — ahora un % de déficit/superávit
+(no un número de kcal fijo) — más el peso/fecha de arranque del programa, y
+el historial completo de cambios de fase (para el PDF).
 
 *** ADVERTENCIA IMPORTANTE ***
 Railway borra el sistema de archivos en cada redeploy. Esto significa que
@@ -51,13 +50,11 @@ def _save_all(all_states):
         json.dump(serializable, f, indent=2)
 
 
-def get_phase_state(athlete_id, default_kcal=2000, peso_inicial_lb=None, fecha_inicio=None):
+def get_phase_state(athlete_id, default_deficit_pct=-0.15, peso_inicial_lb=None, fecha_inicio=None):
     """
     Devuelve el phase_state del atleta, o crea uno inicial (fase 1) si no existe.
     Si es la primera vez, guarda el peso inicial y la fecha de arranque —
     estos dos NUNCA cambian después, sin importar cuántas fases pasen.
-    peso_inicial_lb / fecha_inicio: si el coach los puso manualmente en el
-    sheet, se usan esos; si no, se usa el peso actual de TP y hoy.
     """
     all_states = _load_all()
     if athlete_id in all_states:
@@ -66,7 +63,7 @@ def get_phase_state(athlete_id, default_kcal=2000, peso_inicial_lb=None, fecha_i
     return {
         "atleta_id": athlete_id,
         "fase_actual": 1,
-        "kcal_actual": default_kcal,
+        "deficit_pct": default_deficit_pct,
         "fecha_ultimo_cambio": date.today(),
         "fecha_inicio": fecha_inicio or date.today(),
         "peso_inicial_lb": peso_inicial_lb,
@@ -80,15 +77,17 @@ def save_phase_state(athlete_id, phase_state):
     _save_all(all_states)
 
 
-def append_historial_entry(phase_state, fecha, peso_lb, kcal, objetivo_label, razon):
+def append_historial_entry(phase_state, fecha, peso_lb, deficit_pct, kcal_promedio_semana, objetivo_label, razon):
     """
-    Agrega una fila nueva al historial (solo cuando de verdad cambia la fase/kcal),
-    igual que las filas F1, F2, F3... de tu PDF original.
+    Agrega una fila nueva al historial (solo cuando de verdad cambia el %),
+    igual que las filas F1, F2, F3... de tu PDF original — ahora con el %
+    de déficit/superávit en vez de un número de kcal fijo.
     """
     phase_state.setdefault("historial", []).append({
         "fecha": fecha,
         "peso_lb": peso_lb,
-        "kcal": kcal,
+        "deficit_pct": deficit_pct,
+        "kcal_promedio_semana": kcal_promedio_semana,
         "objetivo_label": objetivo_label,
         "razon": razon,
     })
