@@ -153,6 +153,24 @@ def protein_floor_g(weight_lb, g_per_lb=1.0):
     return round(weight_lb * g_per_lb, 1)
 
 
+# Piso de proteína variable por tipo de día — en descanso se usa un piso
+# más bajo (1.5g/kg en vez de 2.2g/kg) para que quepa mejor dentro del
+# presupuesto de kcal ya reducido por el déficit de descanso, sin
+# comprometer tanto el objetivo de kcal del día. En días normales/clave
+# se mantiene el piso completo (2.2g/kg), ya que ahí sí hace falta
+# proteger la recuperación al máximo.
+PROTEIN_FLOOR_G_POR_KG = {
+    "descanso": 1.5,
+    "normal": 2.2,
+    "clave": 2.2,
+}
+
+
+def protein_floor_g_por_tipo_dia(weight_kg, day_type):
+    g_per_kg = PROTEIN_FLOOR_G_POR_KG.get(day_type, PROTEIN_FLOOR_G_POR_KG["normal"])
+    return round(weight_kg * g_per_kg, 1)
+
+
 def protein_ceiling_g(weight_lb, g_per_lb=1.1):
     """
     Techo máximo de proteína diaria — más allá de esto no aporta beneficio

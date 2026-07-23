@@ -632,9 +632,8 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             ]))
             story.append(alt_header)
             story.append(Paragraph(
-                "Se mantiene tu proteína alta (igual que un día normal) — lo que baja son "
-                "principalmente los carbohidratos, ya que sin el gasto del entreno no hace falta "
-                "reponer esa energía extra.",
+                "Sin el gasto del entreno, tu piso de proteína también baja un poco (día de descanso) — "
+                "lo que más se reduce es el carbohidrato, ya que no hace falta reponer esa energía extra.",
                 ParagraphStyle("AltNote", parent=getSampleStyleSheet()["Normal"], fontSize=8,
                                textColor=colors.HexColor("#666666"), fontName="Helvetica-Oblique",
                                spaceBefore=4, spaceAfter=4),

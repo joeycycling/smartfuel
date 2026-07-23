@@ -28,7 +28,8 @@ from trainingpeaks_client import (
 )
 from prefs_loader import fetch_preferences_csv
 from phase_engine import (
-    update_phase, protein_floor_g, protein_ceiling_g, get_initial_deficit_pct, objetivo_label,
+    update_phase, protein_floor_g, protein_ceiling_g, protein_floor_g_por_tipo_dia,
+    get_initial_deficit_pct, objetivo_label,
     compute_tdee, compute_daily_kcal, classify_day_type, adjust_pct_for_day_type,
 )
 from workout_kcal import estimate_week_kcal
@@ -133,7 +134,6 @@ def process_athlete(page, athlete_prefs, db):
         print(f"  Fase {objetivo_label(objetivo)} | {phase_state['deficit_pct']:+.0%} | ~{kcal_promedio_semana} kcal/día prom | {reason}")
 
         # 5. Plan de comidas por día
-        protein_floor = protein_floor_g(athlete_weight_lb)
         protein_ceiling = protein_ceiling_g(athlete_weight_lb)
         daily_plans = {}
         alt_plans = {}
@@ -148,6 +148,9 @@ def process_athlete(page, athlete_prefs, db):
         prefs_semana["alimentos_evitar"] = list(athlete_prefs.get("alimentos_evitar", []))
 
         for dia in daily_targets:
+            day_type = classify_day_type(sessions_by_day.get(dia, []))
+            protein_floor = protein_floor_g_por_tipo_dia(athlete_weight_kg, day_type)
+
             plan, diff = build_daily_meal_plan(
                 daily_targets[dia], protein_floor, db, prefs_semana,
                 day_sessions=sessions_by_day.get(dia, []),
@@ -156,6 +159,27 @@ def process_athlete(page, athlete_prefs, db):
             daily_plans[dia] = plan
 
             if plan:
+                # El piso de proteína (nunca se viola) a veces necesita más
+                # kcal de las que el día tenía presupuestadas — cuando pasa,
+                # el header debe mostrar el total REAL, no el objetivo
+                # original, para que nunca haya un desfase con las macros
+                # sumadas. El déficit también se recalcula sobre el real.
+                total_real = sum(
+                    plan[s]["opcion_a"]["kcal_total"] for s in ("desayuno", "almuerzo", "merienda", "cena")
+                    if s in plan
+                )
+                if plan.get("pre_entreno"):
+                    total_real += plan["pre_entreno"]["kcal_total"]
+                if plan.get("post_entreno"):
+                    total_real += plan["post_entreno"]["kcal_total"]
+                total_real = round(total_real)
+
+                if abs(total_real - daily_targets[dia]) > 0:
+                    print(f"  [AVISO] {dia}: kcal ajustadas de {daily_targets[dia]} a {total_real} "
+                          f"para cumplir el piso de proteína.")
+                daily_targets[dia] = total_real
+                daily_deficit[dia] = round(tdee_by_day[dia] - total_real)
+
                 for slot in ("desayuno", "almuerzo", "merienda", "cena"):
                     meal = plan.get(slot, {})
                     opcion_a_dia = meal.get("opcion_a") if meal else None
@@ -182,8 +206,9 @@ def process_athlete(page, athlete_prefs, db):
                 )
                 pct_descanso = adjust_pct_for_day_type(phase_state["deficit_pct"], "descanso", objetivo)
                 alt_kcal = compute_daily_kcal(tdee_sin_entrenar, pct_descanso)
+                protein_floor_descanso = protein_floor_g_por_tipo_dia(athlete_weight_kg, "descanso")
                 alt_plan, _ = build_daily_meal_plan(
-                    alt_kcal, protein_floor, db, prefs_semana, day_sessions=[]
+                    alt_kcal, protein_floor_descanso, db, prefs_semana, day_sessions=[]
                 )
                 alt_plans[dia] = {"kcal": alt_kcal, "plan": alt_plan}
 

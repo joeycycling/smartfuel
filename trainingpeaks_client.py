@@ -245,11 +245,20 @@ def extract_planned_workouts_by_day(raw_workouts, workout_type_map=None):
 
 def get_planned_workouts_week(page, athlete_id, start_date=None):
     """
-    Atajo: pide los próximos 7 días de entrenos planificados,
-    ya parseados en el formato de workout_kcal.py.
+    Atajo: pide los entrenos planificados de la PRÓXIMA semana completa
+    (lunes a domingo), ya parseados en el formato de workout_kcal.py.
+
+    Siempre se alinea al lunes que viene (no "hoy + 6 días") — así el
+    bot corrido cualquier día de la semana muestra una semana calendario
+    real y consistente (lunes=lunes, martes=martes), en vez de un rango
+    que se corre según qué día del mes se ejecute el script.
     """
     if start_date is None:
-        start_date = datetime.now().date()
+        today = datetime.now().date()
+        dias_hasta_lunes = (7 - today.weekday()) % 7
+        if dias_hasta_lunes == 0:
+            dias_hasta_lunes = 7  # si hoy es lunes, se refiere a la semana COMPLETA que viene
+        start_date = today + timedelta(days=dias_hasta_lunes)
     end_date = start_date + timedelta(days=6)
     raw = get_planned_workouts_raw(
         page, athlete_id,

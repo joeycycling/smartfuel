@@ -10,8 +10,8 @@ from datetime import date, timedelta
 
 from food_db import load_food_db
 from phase_engine import (
-    update_phase, protein_floor_g, objetivo_label, compute_tdee, compute_daily_kcal,
-    classify_day_type, adjust_pct_for_day_type,
+    update_phase, protein_floor_g, protein_floor_g_por_tipo_dia, objetivo_label,
+    compute_tdee, compute_daily_kcal, classify_day_type, adjust_pct_for_day_type,
 )
 from workout_kcal import estimate_week_kcal
 from meal_planner import build_daily_meal_plan, build_shopping_list
@@ -76,10 +76,12 @@ def demo():
     # --- 3. TDEE y kcal objetivo POR DÍA (cada día calculado por separado) ---
     daily_targets = {}
     daily_deficit = {}
+    tdee_by_day = {}
     for dia, burn in daily_burn.items():
         training_min = sum(s.get("duration_min", 0) for s in sessions_by_day.get(dia, []))
         tdee_dia = compute_tdee(athlete_weight_kg, height_cm, age, gender, actividad_diaria,
                                  training_kcal=burn, training_min=training_min)
+        tdee_by_day[dia] = tdee_dia
         day_type = classify_day_type(sessions_by_day.get(dia, []))
         pct_dia = adjust_pct_for_day_type(new_phase_state["deficit_pct"], day_type, objetivo)
         daily_targets[dia] = compute_daily_kcal(tdee_dia, pct_dia)
@@ -92,15 +94,31 @@ def demo():
     print("Kcal promedio de la semana:", kcal_promedio_semana, "\n")
 
     # --- 4. plan de comidas por día ---
-    protein_floor = protein_floor_g(athlete_weight_lb)
     daily_plans = {}
     alt_plans = {}
     for day in daily_targets:
+        day_type_meal = classify_day_type(sessions_by_day.get(day, []))
+        protein_floor = protein_floor_g_por_tipo_dia(athlete_weight_kg, day_type_meal)
         plan, diff = build_daily_meal_plan(
             daily_targets[day], protein_floor, db, prefs,
             day_sessions=sessions_by_day.get(day, [])
         )
         daily_plans[day] = plan
+
+        if plan:
+            total_real = sum(
+                plan[s]["opcion_a"]["kcal_total"] for s in ("desayuno", "almuerzo", "merienda", "cena")
+                if s in plan
+            )
+            if plan.get("pre_entreno"):
+                total_real += plan["pre_entreno"]["kcal_total"]
+            if plan.get("post_entreno"):
+                total_real += plan["post_entreno"]["kcal_total"]
+            total_real = round(total_real)
+            if abs(total_real - daily_targets[day]) > 0:
+                print(f"  [AVISO] {day}: kcal ajustadas de {daily_targets[day]} a {total_real} para cumplir el piso de proteína.")
+            daily_targets[day] = total_real
+            daily_deficit[day] = round(tdee_by_day[day] - total_real)
 
         burn_dia = daily_burn.get(day, 0)
         if burn_dia > 0:
@@ -108,7 +126,8 @@ def demo():
                                               training_kcal=0, training_min=0)
             pct_descanso = adjust_pct_for_day_type(new_phase_state["deficit_pct"], "descanso", objetivo)
             alt_kcal = compute_daily_kcal(tdee_sin_entrenar, pct_descanso)
-            alt_plan, _ = build_daily_meal_plan(alt_kcal, protein_floor, db, prefs, day_sessions=[])
+            protein_floor_descanso = protein_floor_g_por_tipo_dia(athlete_weight_kg, "descanso")
+            alt_plan, _ = build_daily_meal_plan(alt_kcal, protein_floor_descanso, db, prefs, day_sessions=[])
             alt_plans[day] = {"kcal": alt_kcal, "plan": alt_plan}
 
         print(f"--- {day.upper()} (objetivo {daily_targets[day]} kcal, déficit est. {daily_deficit[day]:+d}, diferencia real: {diff:.0f}) ---")
