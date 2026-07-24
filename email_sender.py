@@ -75,3 +75,50 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
     except urllib.error.HTTPError as e:
         error_body = e.read().decode("utf-8", errors="ignore")
         raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
+
+
+def send_weight_reminder_email(athlete_name, athlete_email):
+    """
+    Recordatorio simple (sin PDF adjunto) para que el atleta actualice su
+    peso en TrainingPeaks — se manda los viernes, así el dato está fresco
+    cuando se arma el plan del sábado.
+    """
+    api_key = os.environ["RESEND_API_KEY"]
+    from_address = os.environ.get("EMAIL_FROM", "onboarding@resend.dev")
+
+    body_text = (
+        f"Hola {athlete_name},\n\n"
+        f"Recordatorio rápido: actualiza tu peso de esta semana en TrainingPeaks "
+        f"(sección Metrics → Weight) antes del fin de semana.\n\n"
+        f"Así tu plan nutricional de la próxima semana sale calculado con tu peso "
+        f"más reciente, no uno desactualizado.\n\n"
+        f"Gracias!\n\n"
+        f"Joey Martí\n"
+        f"Cycling Coach — CircuitCycling"
+    )
+
+    payload = {
+        "from": from_address,
+        "to": [athlete_email],
+        "subject": "Recordatorio: actualiza tu peso en TrainingPeaks",
+        "text": body_text,
+    }
+
+    req = urllib.request.Request(
+        RESEND_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartFuelBot/1.0 (+https://joeycycling.com)",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status not in (200, 201):
+                raise Exception(f"Resend devolvió status {response.status}")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="ignore")
+        raise Exception(f"Resend HTTP {e.code}: {error_body}") from None

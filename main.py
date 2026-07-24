@@ -1,9 +1,10 @@
 """
 main.py
 Orquestador del SmartFuel Nutrition Bot.
-Corre cada sábado a las 12:00PM: lee preferencias + TrainingPeaks de cada
-atleta, arma el plan nutricional de la semana, genera el PDF y lo envía
-por correo.
+- Cada sábado 12:00PM: lee preferencias + TrainingPeaks de cada atleta,
+  arma el plan nutricional de la semana, genera el PDF y lo envía por correo.
+- Cada viernes 9:00AM: le manda a cada atleta un recordatorio simple para
+  que actualice su peso en TrainingPeaks antes del fin de semana.
 
 Variables de entorno esperadas (configurar en Railway):
     TP_EMAIL           - email de la cuenta de coach en TrainingPeaks
@@ -37,7 +38,7 @@ from meal_planner import build_daily_meal_plan, build_shopping_list
 from food_db import load_food_db
 from phase_store import get_phase_state, save_phase_state, append_historial_entry
 from pdf_builder import build_weekly_pdf
-from email_sender import send_weekly_plan_email
+from email_sender import send_weekly_plan_email, send_weight_reminder_email
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_pdfs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -282,6 +283,42 @@ def run_weekly_job(athlete_id_filter=None, send_email=True):
     print("=== Corrida semanal terminada ===\n")
 
 
+def run_weight_reminder_job(athlete_id_filter=None):
+    """
+    Corre los viernes: le manda a cada atleta un recordatorio simple para
+    que actualice su peso en TrainingPeaks antes del fin de semana — así
+    el plan del sábado usa un dato fresco, no uno de hace 2 semanas.
+    """
+    print(f"\n=== SmartFuel — recordatorio de peso {datetime.now()} ===")
+    if athlete_id_filter:
+        print(f"    (modo prueba: solo atleta con ID {athlete_id_filter})")
+
+    csv_url = os.environ["PREFS_CSV_URL"]
+    all_prefs = fetch_preferences_csv(csv_url)
+
+    for athlete_prefs in all_prefs:
+        athlete_id = athlete_prefs.get("id_atleta")
+        athlete_name = athlete_prefs.get("nombre") or "Atleta"
+        athlete_email = athlete_prefs.get("email")
+
+        if not athlete_id:
+            continue
+        if athlete_id_filter and str(athlete_id) != str(athlete_id_filter):
+            continue
+        if not athlete_email:
+            print(f"  [AVISO] {athlete_name} no tiene email en el sheet, se omite.")
+            continue
+
+        try:
+            send_weight_reminder_email(athlete_name, athlete_email)
+            print(f"  Recordatorio enviado a {athlete_name} ({athlete_email})")
+        except Exception:
+            print(f"[ERROR] Falló el recordatorio para {athlete_name}:")
+            traceback.print_exc()
+
+    print("=== Recordatorio de peso terminado ===\n")
+
+
 def _get_arg_value(flag_prefix):
     """Extrae el valor de un flag tipo --athlete-id=12345 de sys.argv."""
     for arg in sys.argv:
@@ -296,9 +333,15 @@ if __name__ == "__main__":
         send_email = "--no-email" not in sys.argv
         run_weekly_job(athlete_id_filter=athlete_id_filter, send_email=send_email)
         print("Corrida manual terminada.")
+    elif "--run-reminder-now" in sys.argv:
+        athlete_id_filter = _get_arg_value("--athlete-id=")
+        run_weight_reminder_job(athlete_id_filter=athlete_id_filter)
+        print("Recordatorio manual terminado.")
     else:
         schedule.every().saturday.at("12:00").do(run_weekly_job)
-        print("SmartFuel Bot corriendo — esperando al sábado 12:00PM...")
+        schedule.every().friday.at("09:00").do(run_weight_reminder_job)
+        print("SmartFuel Bot corriendo — esperando viernes 9:00AM (recordatorio de peso) "
+              "y sábado 12:00PM (plan semanal)...")
         while True:
             schedule.run_pending()
             time.sleep(60)
