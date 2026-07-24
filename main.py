@@ -43,10 +43,12 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_pdfs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def process_athlete(page, athlete_prefs, db):
+def process_athlete(page, athlete_prefs, db, send_email=True):
     """
     Corre el pipeline completo para un solo atleta.
     athlete_prefs: dict ya parseado por prefs_loader (una fila del sheet).
+    send_email: si es False, genera el PDF pero NO lo envía (para probar
+    sin arriesgarte a mandarle algo a nadie por accidente).
     """
     athlete_id = athlete_prefs.get("id_atleta")
     athlete_name = athlete_prefs.get("nombre") or "Atleta"
@@ -243,7 +245,9 @@ def process_athlete(page, athlete_prefs, db):
         )
 
         # 7. Envío por correo
-        if athlete_email:
+        if not send_email:
+            print(f"  [MODO PRUEBA] PDF generado en {pdf_path} — NO se envió correo.")
+        elif athlete_email:
             send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label)
             print(f"  Enviado a {athlete_email}")
         else:
@@ -254,8 +258,12 @@ def process_athlete(page, athlete_prefs, db):
         traceback.print_exc()
 
 
-def run_weekly_job():
+def run_weekly_job(athlete_id_filter=None, send_email=True):
     print(f"\n=== SmartFuel — corrida semanal {datetime.now()} ===")
+    if athlete_id_filter:
+        print(f"    (modo prueba: solo atleta con ID {athlete_id_filter})")
+    if not send_email:
+        print("    (modo prueba: NO se enviarán correos)")
 
     csv_url = os.environ["PREFS_CSV_URL"]
     all_prefs = fetch_preferences_csv(csv_url)
@@ -265,16 +273,28 @@ def run_weekly_job():
         page, browser = login_and_get_page(p)
         try:
             for athlete_prefs in all_prefs:
-                process_athlete(page, athlete_prefs, db)
+                if athlete_id_filter and str(athlete_prefs.get("id_atleta")) != str(athlete_id_filter):
+                    continue
+                process_athlete(page, athlete_prefs, db, send_email=send_email)
         finally:
             browser.close()
 
     print("=== Corrida semanal terminada ===\n")
 
 
+def _get_arg_value(flag_prefix):
+    """Extrae el valor de un flag tipo --athlete-id=12345 de sys.argv."""
+    for arg in sys.argv:
+        if arg.startswith(flag_prefix):
+            return arg.split("=", 1)[1]
+    return None
+
+
 if __name__ == "__main__":
     if "--run-now" in sys.argv:
-        run_weekly_job()
+        athlete_id_filter = _get_arg_value("--athlete-id=")
+        send_email = "--no-email" not in sys.argv
+        run_weekly_job(athlete_id_filter=athlete_id_filter, send_email=send_email)
         print("Corrida manual terminada.")
     else:
         schedule.every().saturday.at("12:00").do(run_weekly_job)

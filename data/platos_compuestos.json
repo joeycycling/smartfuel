@@ -452,5 +452,2197 @@
       }
     ],
     "costo": "balanceado"
+  },
+  {
+    "nombre": "Los Tres Golpes",
+    "kcal_base": 791,
+    "proteina_g": 32,
+    "carbohidratos_g": 48,
+    "grasa_g": 48,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Plátano verde frito",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salami dominicano frito",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo frito",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Queso de freír dominicano frito",
+        "cantidad": 50,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Avena Protein",
+    "kcal_base": 548,
+    "proteina_g": 37.9,
+    "carbohidratos_g": 70.2,
+    "grasa_g": 15.7,
+    "alergenos": [
+      "frutos secos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Avena cruda",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Proteína en polvo",
+        "cantidad": 30,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Guineo maduro",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Mantequilla de maní",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Overnight Oats con Frutas",
+    "kcal_base": 402,
+    "proteina_g": 10.6,
+    "carbohidratos_g": 79.2,
+    "grasa_g": 6.8,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Avena cruda",
+        "cantidad": 70,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Leche de almendra",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Guineo maduro",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Miel",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Yogur Griego con Granola y Frutas",
+    "kcal_base": 425,
+    "proteina_g": 25.9,
+    "carbohidratos_g": 57.6,
+    "grasa_g": 11.0,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Yogurt griego 0%",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Granola",
+        "cantidad": 50,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Guineo maduro",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Yogur Griego High Protein",
+    "kcal_base": 269,
+    "proteina_g": 41.0,
+    "carbohidratos_g": 22.9,
+    "grasa_g": 1.8,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Yogurt griego 0%",
+        "cantidad": 250,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Proteína en polvo",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Miel",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Omelette de Jamón y Queso",
+    "kcal_base": 334,
+    "proteina_g": 33.2,
+    "carbohidratos_g": 3.9,
+    "grasa_g": 21.3,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Huevo",
+        "cantidad": 3,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Jamón de pavo",
+        "cantidad": 40,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 30,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Omelette de Espinaca y Queso",
+    "kcal_base": 308,
+    "proteina_g": 28.1,
+    "carbohidratos_g": 4.9,
+    "grasa_g": 20.3,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Huevo",
+        "cantidad": 3,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Espinaca cocida",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 30,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Omelette de Vegetales",
+    "kcal_base": 296,
+    "proteina_g": 25.6,
+    "carbohidratos_g": 8.4,
+    "grasa_g": 18.7,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Huevo",
+        "cantidad": 3,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Vegetales mixtos crudos",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Omelette de Pavo",
+    "kcal_base": 426,
+    "proteina_g": 45.2,
+    "carbohidratos_g": 2.4,
+    "grasa_g": 25.6,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Huevo",
+        "cantidad": 3,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Pavo molido (cocido)",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Wrap de Huevo y Pavo",
+    "kcal_base": 446,
+    "proteina_g": 31.1,
+    "carbohidratos_g": 35.3,
+    "grasa_g": 19.9,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Tortilla de harina grande",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Jamón de pavo",
+        "cantidad": 50,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Burrito de Desayuno",
+    "kcal_base": 602,
+    "proteina_g": 41.8,
+    "carbohidratos_g": 50.8,
+    "grasa_g": 24.7,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Tortilla de harina grande",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Pavo molido (cocido)",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 25,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Papas para desayuno",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Tostadas de Aguacate con Huevos",
+    "kcal_base": 428,
+    "proteina_g": 21.6,
+    "carbohidratos_g": 38.0,
+    "grasa_g": 24.0,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pan integral",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Aguacate",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      }
+    ]
+  },
+  {
+    "nombre": "Pancakes de Avena y Proteína",
+    "kcal_base": 457,
+    "proteina_g": 37.8,
+    "carbohidratos_g": 56.1,
+    "grasa_g": 10.4,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Avena cruda",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Proteína en polvo",
+        "cantidad": 30,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Miel",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Waffles Protein con Frutas",
+    "kcal_base": 507,
+    "proteina_g": 28.9,
+    "carbohidratos_g": 70.0,
+    "grasa_g": 13.0,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Waffle",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Proteína en polvo",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Guineo maduro",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Steak & Eggs",
+    "kcal_base": 480,
+    "proteina_g": 49.5,
+    "carbohidratos_g": 1.2,
+    "grasa_g": 31.0,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Filete de res",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      }
+    ]
+  },
+  {
+    "nombre": "Eggs Benedict con Salmón",
+    "kcal_base": 580,
+    "proteina_g": 32.4,
+    "carbohidratos_g": 50.8,
+    "grasa_g": 27.0,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Bagel",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Salmón ahumado",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Salsa hollandaise",
+        "cantidad": 30,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Bagel con Huevo y Pavo",
+    "kcal_base": 486,
+    "proteina_g": 33.4,
+    "carbohidratos_g": 52.0,
+    "grasa_g": 16.1,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Bagel",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Jamón de pavo",
+        "cantidad": 40,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Croissant de Huevo, Pavo y Queso",
+    "kcal_base": 490,
+    "proteina_g": 28.8,
+    "carbohidratos_g": 28.7,
+    "grasa_g": 29.8,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Croissant",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Jamón de pavo",
+        "cantidad": 40,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso cheddar",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "French Toast Protein",
+    "kcal_base": 347,
+    "proteina_g": 25.0,
+    "carbohidratos_g": 52.9,
+    "grasa_g": 3.8,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pan tostado francés",
+        "cantidad": 3,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Proteína en polvo",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Miel",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Sandwich de Huevo, Pavo y Queso",
+    "kcal_base": 396,
+    "proteina_g": 32.4,
+    "carbohidratos_g": 33.0,
+    "grasa_g": 16.6,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pan integral",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Jamón de pavo",
+        "cantidad": 40,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Breakfast Bowl",
+    "kcal_base": 344,
+    "proteina_g": 26.8,
+    "carbohidratos_g": 28.2,
+    "grasa_g": 14.7,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "desayuno"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Huevo",
+        "cantidad": 2,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Papas para desayuno",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Jamón de pavo",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pollo Teriyaki con Arroz",
+    "kcal_base": 528,
+    "proteina_g": 60.7,
+    "carbohidratos_g": 48.4,
+    "grasa_g": 6.9,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa teriyaki",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pollo al Curry con Arroz",
+    "kcal_base": 642,
+    "proteina_g": 62.4,
+    "carbohidratos_g": 48.9,
+    "grasa_g": 19.8,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz jazmín cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa curry coco",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pollo BBQ con Puré de Papa",
+    "kcal_base": 597,
+    "proteina_g": 60.2,
+    "carbohidratos_g": 48.8,
+    "grasa_g": 14.7,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Puré de papa",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa BBQ",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pollo al Limón con Vegetales",
+    "kcal_base": 437,
+    "proteina_g": 59.8,
+    "carbohidratos_g": 28.0,
+    "grasa_g": 8.5,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales asados",
+        "cantidad": 200,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pechuga a la Parrilla con Batata",
+    "kcal_base": 477,
+    "proteina_g": 59.8,
+    "carbohidratos_g": 42.0,
+    "grasa_g": 6.7,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Batata horneada",
+        "cantidad": 200,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pollo Parmesano con Pasta",
+    "kcal_base": 615,
+    "proteina_g": 65.5,
+    "carbohidratos_g": 53.8,
+    "grasa_g": 13.4,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 160,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa tomate",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano",
+        "cantidad": 20,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pasta Alfredo con Pollo",
+    "kcal_base": 582,
+    "proteina_g": 56.0,
+    "carbohidratos_g": 49.0,
+    "grasa_g": 16.4,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa alfredo",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pasta Alfredo con Camarones",
+    "kcal_base": 513,
+    "proteina_g": 52.7,
+    "carbohidratos_g": 49.4,
+    "grasa_g": 11.6,
+    "alergenos": [
+      "gluten",
+      "lactosa",
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa alfredo",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pasta Pesto con Pollo",
+    "kcal_base": 576,
+    "proteina_g": 55.6,
+    "carbohidratos_g": 46.6,
+    "grasa_g": 16.9,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa pesto",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pasta Primavera con Pollo",
+    "kcal_base": 544,
+    "proteina_g": 56.4,
+    "carbohidratos_g": 54.6,
+    "grasa_g": 9.4,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales salteados",
+        "cantidad": 120,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Beef Stir Fry con Arroz",
+    "kcal_base": 611,
+    "proteina_g": 62.0,
+    "carbohidratos_g": 56.4,
+    "grasa_g": 14.2,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales salteados",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa teriyaki",
+        "cantidad": 30,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Steak Bowl con Arroz",
+    "kcal_base": 674,
+    "proteina_g": 51.0,
+    "carbohidratos_g": 56.0,
+    "grasa_g": 26.6,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Filete de res",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales asados",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Filete de Res con Puré y Vegetales",
+    "kcal_base": 758,
+    "proteina_g": 55.6,
+    "carbohidratos_g": 50.0,
+    "grasa_g": 36.2,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Filete de res",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Puré de papa",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales asados",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Ribeye con Papas Asadas",
+    "kcal_base": 820,
+    "proteina_g": 56.8,
+    "carbohidratos_g": 42.0,
+    "grasa_g": 46.4,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Ribeye",
+        "cantidad": 220,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Papas asadas",
+        "cantidad": 200,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Filete Mignon con Vegetales",
+    "kcal_base": 580,
+    "proteina_g": 53.6,
+    "carbohidratos_g": 25.2,
+    "grasa_g": 29.8,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Filete de res",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales asados",
+        "cantidad": 180,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Tuna Poke Bowl",
+    "kcal_base": 646,
+    "proteina_g": 60.4,
+    "carbohidratos_g": 52.8,
+    "grasa_g": 20.9,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Atún fresco",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz jazmín cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aguacate",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales mixtos crudos",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Salmon Poke Bowl",
+    "kcal_base": 643,
+    "proteina_g": 51.4,
+    "carbohidratos_g": 52.8,
+    "grasa_g": 23.9,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Salmón horneado",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz jazmín cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aguacate",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales mixtos crudos",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Salmón Teriyaki con Arroz Jazmín",
+    "kcal_base": 586,
+    "proteina_g": 54.2,
+    "carbohidratos_g": 47.7,
+    "grasa_g": 16.3,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Salmón horneado",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz jazmín cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa teriyaki",
+        "cantidad": 30,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Salmón con Puré de Batata",
+    "kcal_base": 544,
+    "proteina_g": 54.0,
+    "carbohidratos_g": 42.0,
+    "grasa_g": 16.2,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Salmón horneado",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Batata horneada",
+        "cantidad": 200,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Atún Sellado con Arroz",
+    "kcal_base": 563,
+    "proteina_g": 64.0,
+    "carbohidratos_g": 42.0,
+    "grasa_g": 13.0,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Atún fresco",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Camarones al Ajillo con Arroz",
+    "kcal_base": 413,
+    "proteina_g": 56.9,
+    "carbohidratos_g": 42.4,
+    "grasa_g": 1.1,
+    "alergenos": [
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 220,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Camarones en Salsa Cremosa con Pasta",
+    "kcal_base": 533,
+    "proteina_g": 57.5,
+    "carbohidratos_g": 49.4,
+    "grasa_g": 11.7,
+    "alergenos": [
+      "gluten",
+      "lactosa",
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa alfredo",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Shrimp Fajita Bowl",
+    "kcal_base": 414,
+    "proteina_g": 53.2,
+    "carbohidratos_g": 42.0,
+    "grasa_g": 3.5,
+    "alergenos": [
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales salteados",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Arroz Frito de Pollo",
+    "kcal_base": 768,
+    "proteina_g": 65.0,
+    "carbohidratos_g": 63.1,
+    "grasa_g": 27.9,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz frito base",
+        "cantidad": 250,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 1,
+        "unidad": "ud"
+      }
+    ]
+  },
+  {
+    "nombre": "Arroz Frito de Camarones",
+    "kcal_base": 698,
+    "proteina_g": 61.7,
+    "carbohidratos_g": 63.5,
+    "grasa_g": 23.0,
+    "alergenos": [
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz frito base",
+        "cantidad": 250,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Huevo",
+        "cantidad": 1,
+        "unidad": "ud"
+      }
+    ]
+  },
+  {
+    "nombre": "Burrito Bowl de Pollo",
+    "kcal_base": 624,
+    "proteina_g": 70.2,
+    "carbohidratos_g": 55.5,
+    "grasa_g": 11.2,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 170,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 130,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Frijoles negros",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 25,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Burrito Bowl de Carne",
+    "kcal_base": 642,
+    "proteina_g": 69.3,
+    "carbohidratos_g": 55.5,
+    "grasa_g": 15.2,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 170,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 130,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Frijoles negros",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 25,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Burrito Bowl de Camarones",
+    "kcal_base": 521,
+    "proteina_g": 60.7,
+    "carbohidratos_g": 55.9,
+    "grasa_g": 5.6,
+    "alergenos": [
+      "lactosa",
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 130,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Frijoles negros",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 25,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Ensalada César con Pollo",
+    "kcal_base": 544,
+    "proteina_g": 59.4,
+    "carbohidratos_g": 20.5,
+    "grasa_g": 23.5,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 160,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada base",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aderezo césar",
+        "cantidad": 30,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Crutones",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Ensalada César con Camarones",
+    "kcal_base": 458,
+    "proteina_g": 53.0,
+    "carbohidratos_g": 20.9,
+    "grasa_g": 18.3,
+    "alergenos": [
+      "gluten",
+      "lactosa",
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada base",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aderezo césar",
+        "cantidad": 30,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Crutones",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Ensalada Mediterránea con Pollo",
+    "kcal_base": 439,
+    "proteina_g": 57.8,
+    "carbohidratos_g": 10.8,
+    "grasa_g": 17.9,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 160,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada base",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aguacate",
+        "cantidad": 50,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano",
+        "cantidad": 15,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Wrap César de Pollo",
+    "kcal_base": 551,
+    "proteina_g": 52.8,
+    "carbohidratos_g": 36.0,
+    "grasa_g": 19.8,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Tortilla de harina grande",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada base",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aderezo césar",
+        "cantidad": 25,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Wrap de Pavo",
+    "kcal_base": 516,
+    "proteina_g": 46.3,
+    "carbohidratos_g": 35.2,
+    "grasa_g": 18.7,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Tortilla de harina grande",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Pavo molido (cocido)",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Ensalada base",
+        "cantidad": 80,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Chili con Carne y Arroz",
+    "kcal_base": 646,
+    "proteina_g": 67.7,
+    "carbohidratos_g": 65.4,
+    "grasa_g": 12.3,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Frijoles negros",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 130,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa tomate",
+        "cantidad": 60,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Turkey Burger con Papas Asadas",
+    "kcal_base": 642,
+    "proteina_g": 56.2,
+    "carbohidratos_g": 57.8,
+    "grasa_g": 19.4,
+    "alergenos": [
+      "gluten"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pavo molido (cocido)",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pan de hamburguesa",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Papas asadas",
+        "cantidad": 180,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Chicken Burger Deluxe",
+    "kcal_base": 561,
+    "proteina_g": 65.6,
+    "carbohidratos_g": 23.7,
+    "grasa_g": 22.1,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pan de hamburguesa",
+        "cantidad": 1,
+        "unidad": "ud"
+      },
+      {
+        "nombre": "Queso cheddar",
+        "cantidad": 20,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Aguacate",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Lasaña de Carne",
+    "kcal_base": 634,
+    "proteina_g": 66.8,
+    "carbohidratos_g": 47.5,
+    "grasa_g": 19.3,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa tomate",
+        "cantidad": 100,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 50,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Lasaña de Pollo",
+    "kcal_base": 656,
+    "proteina_g": 68.1,
+    "carbohidratos_g": 40.7,
+    "grasa_g": 22.7,
+    "alergenos": [
+      "gluten",
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Pasta cocida",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa alfredo",
+        "cantidad": 80,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 50,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Moussaka de Carne",
+    "kcal_base": 524,
+    "proteina_g": 61.3,
+    "carbohidratos_g": 32.5,
+    "grasa_g": 17.0,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Carne molida de res",
+        "cantidad": 160,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Batata horneada",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano",
+        "cantidad": 25,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Risotto de Camarones",
+    "kcal_base": 520,
+    "proteina_g": 57.6,
+    "carbohidratos_g": 51.8,
+    "grasa_g": 8.3,
+    "alergenos": [
+      "lactosa",
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Camarones",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso parmesano",
+        "cantidad": 25,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Paella de Mariscos",
+    "kcal_base": 454,
+    "proteina_g": 40.9,
+    "carbohidratos_g": 54.4,
+    "grasa_g": 6.5,
+    "alergenos": [
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Mariscos mixtos",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 180,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Surf & Turf",
+    "kcal_base": 654,
+    "proteina_g": 69.3,
+    "carbohidratos_g": 30.2,
+    "grasa_g": 27.4,
+    "alergenos": [
+      "mariscos"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Filete de res",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Camarones",
+        "cantidad": 120,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Puré de papa",
+        "cantidad": 150,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Pollo Relleno con Espinaca y Mozzarella",
+    "kcal_base": 439,
+    "proteina_g": 71.8,
+    "carbohidratos_g": 3.4,
+    "grasa_g": 13.9,
+    "alergenos": [
+      "lactosa"
+    ],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Pechuga de pollo",
+        "cantidad": 190,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Espinaca cocida",
+        "cantidad": 60,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Queso mozzarella",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Cerdo en Salsa BBQ con Puré",
+    "kcal_base": 634,
+    "proteina_g": 49.0,
+    "carbohidratos_g": 44.8,
+    "grasa_g": 25.4,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Cerdo",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Puré de papa",
+        "cantidad": 180,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Salsa BBQ",
+        "cantidad": 40,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Chuletas a la Parrilla con Arroz",
+    "kcal_base": 575,
+    "proteina_g": 51.5,
+    "carbohidratos_g": 42.0,
+    "grasa_g": 19.4,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Cerdo",
+        "cantidad": 190,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      }
+    ]
+  },
+  {
+    "nombre": "Mahi Mahi con Arroz y Vegetales",
+    "kcal_base": 483,
+    "proteina_g": 54.0,
+    "carbohidratos_g": 56.0,
+    "grasa_g": 3.5,
+    "alergenos": [],
+    "costo": "premium",
+    "slots": [
+      "almuerzo",
+      "cena"
+    ],
+    "ingredientes": [
+      {
+        "nombre": "Mahi mahi",
+        "cantidad": 200,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Arroz blanco cocido",
+        "cantidad": 150,
+        "unidad": "g"
+      },
+      {
+        "nombre": "Vegetales asados",
+        "cantidad": 100,
+        "unidad": "g"
+      }
+    ]
   }
 ]

@@ -289,6 +289,7 @@ def _plato_permitido(plato, prefs, slot):
 PROTEINA_KEYWORDS = (
     "pollo", "carne", "pavo", "salmón", "salmon", "camarones", "pescado",
     "cerdo", "res guisada", "res (", "atún", "tilapia", "mero", "basa",
+    "salami", "huevo",
 )
 
 

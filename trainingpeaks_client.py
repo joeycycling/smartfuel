@@ -198,19 +198,28 @@ def compute_planned_if(tss_planned, duration_min):
         return None
 
 
-def extract_planned_workouts_by_day(raw_workouts, workout_type_map=None):
+def extract_planned_workouts_by_day(raw_workouts, start_date, end_date, workout_type_map=None):
     """
     Convierte la lista cruda de workouts de TP al formato que espera
     workout_kcal.estimate_week_kcal():
         [{"dia": "lunes", "sesiones": [{"sport":, "intensidad":, "duration_min":, "planned_if":}, ...]}, ...]
 
     Solo incluye entrenos PLANIFICADOS (no completados), agrupados por día
-    de la semana en español.
+    de la semana en español — y SOLO para los días cuya fecha real cae
+    dentro de [start_date, end_date]. Si la corrida es de miércoles a
+    domingo, no se generan entradas falsas de lunes/martes (que ya pasaron
+    y no forman parte de esta corrida).
     """
     workout_type_map = workout_type_map or WORKOUT_TYPE_MAP
     dias_es = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
 
-    by_day = {d: [] for d in dias_es}
+    dias_en_rango = []
+    fecha_cursor = start_date
+    while fecha_cursor <= end_date:
+        dias_en_rango.append(dias_es[fecha_cursor.weekday()])
+        fecha_cursor += timedelta(days=1)
+
+    by_day = {d: [] for d in dias_en_rango}
 
     for w in raw_workouts:
         tss_planned = w.get("tssPlanned")
@@ -231,6 +240,8 @@ def extract_planned_workouts_by_day(raw_workouts, workout_type_map=None):
         if not fecha_str:
             continue
         fecha = datetime.fromisoformat(fecha_str[:10]).date()
+        if fecha < start_date or fecha > end_date:
+            continue  # fuera del rango de esta corrida (ej. ya pasó)
         dia_semana = dias_es[fecha.weekday()]
 
         by_day[dia_semana].append({
@@ -240,29 +251,36 @@ def extract_planned_workouts_by_day(raw_workouts, workout_type_map=None):
             "planned_if": planned_if,
         })
 
-    return [{"dia": d, "sesiones": by_day[d]} for d in dias_es]
+    return [{"dia": d, "sesiones": by_day[d]} for d in dias_en_rango]
 
 
 def get_planned_workouts_week(page, athlete_id, start_date=None):
     """
-    Atajo: pide los entrenos planificados de la PRÓXIMA semana completa
-    (lunes a domingo), ya parseados en el formato de workout_kcal.py.
+    Atajo: pide los entrenos planificados y los devuelve ya parseados en
+    el formato de workout_kcal.py.
 
-    Siempre se alinea al lunes que viene (no "hoy + 6 días") — así el
-    bot corrido cualquier día de la semana muestra una semana calendario
-    real y consistente (lunes=lunes, martes=martes), en vez de un rango
-    que se corre según qué día del mes se ejecute el script.
+    - Corrida normal de producción (sábado, vía el scheduler): arma la
+      semana COMPLETA que viene, lunes a domingo.
+    - Corrida forzada cualquier otro día (--run-now para probar): arma
+      SOLO el resto de ESTA semana, de hoy al domingo — nunca salta a la
+      semana siguiente, para no mostrar días vacíos de una semana que
+      quizás el coach ni ha planificado todavía.
     """
     if start_date is None:
         today = datetime.now().date()
-        dias_hasta_lunes = (7 - today.weekday()) % 7
-        if dias_hasta_lunes == 0:
-            dias_hasta_lunes = 7  # si hoy es lunes, se refiere a la semana COMPLETA que viene
-        start_date = today + timedelta(days=dias_hasta_lunes)
-    end_date = start_date + timedelta(days=6)
+        if today.weekday() == 5:  # sábado — corrida de producción normal
+            start_date = today + timedelta(days=2)  # próximo lunes
+            end_date = start_date + timedelta(days=6)  # ese domingo
+        else:  # corrida forzada cualquier otro día — resto de esta semana
+            start_date = today
+            dias_hasta_domingo = 6 - today.weekday()  # lunes=0 ... domingo=6
+            end_date = today + timedelta(days=dias_hasta_domingo)
+    else:
+        end_date = start_date + timedelta(days=6)
+
     raw = get_planned_workouts_raw(
         page, athlete_id,
         start_date.strftime("%Y-%m-%d"),
         end_date.strftime("%Y-%m-%d"),
     )
-    return extract_planned_workouts_by_day(raw)
+    return extract_planned_workouts_by_day(raw, start_date, end_date)
