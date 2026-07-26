@@ -17,7 +17,7 @@ import os
 import sys
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import schedule
 from playwright.sync_api import sync_playwright
@@ -45,7 +45,7 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_pdfs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email=None):
+def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email=None, start_date=None):
     """
     Corre el pipeline completo para un solo atleta.
     athlete_prefs: dict ya parseado por prefs_loader (una fila del sheet).
@@ -53,6 +53,11 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
     sin arriesgarte a mandarle algo a nadie por accidente).
     feedback_por_email: dict {email: feedback_dict} del form semanal de
     feedback (alimentos a agregar/quitar, si quiere más variedad).
+    start_date: date opcional (lunes de la semana a planificar). Si es None,
+    se usa el comportamiento por defecto de get_planned_workouts_week
+    (semana completa si es sábado, resto de esta semana si es corrida forzada
+    otro día). Se usa para forzar explícitamente "la semana que viene" con
+    --next-week o una semana específica con --start-date=YYYY-MM-DD.
     """
     athlete_id = athlete_prefs.get("id_atleta")
     athlete_name = athlete_prefs.get("nombre") or "Atleta"
@@ -71,7 +76,7 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         ftp = extract_ftp(settings)
         age = extract_age(settings) or 30
         gender = extract_gender(settings) or "m"
-        planned_workouts = get_planned_workouts_week(page, athlete_id)
+        planned_workouts = get_planned_workouts_week(page, athlete_id, start_date=start_date)
 
         if not weight_history:
             print(f"[SKIP] {athlete_name}: sin historial de peso en TrainingPeaks todavía.")
@@ -324,12 +329,14 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         traceback.print_exc()
 
 
-def run_weekly_job(athlete_id_filter=None, send_email=True):
+def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
     print(f"\n=== SmartFuel — corrida semanal {datetime.now()} ===")
     if athlete_id_filter:
         print(f"    (modo prueba: solo atleta con ID {athlete_id_filter})")
     if not send_email:
         print("    (modo prueba: NO se enviarán correos)")
+    if start_date:
+        print(f"    (semana forzada: {start_date} a {start_date + timedelta(days=6)})")
 
     csv_url = os.environ["PREFS_CSV_URL"]
     all_prefs = fetch_preferences_csv(csv_url)
@@ -352,7 +359,7 @@ def run_weekly_job(athlete_id_filter=None, send_email=True):
             for athlete_prefs in all_prefs:
                 if athlete_id_filter and str(athlete_prefs.get("id_atleta")) != str(athlete_id_filter):
                     continue
-                process_athlete(page, athlete_prefs, db, send_email=send_email, feedback_por_email=feedback_por_email)
+                process_athlete(page, athlete_prefs, db, send_email=send_email, feedback_por_email=feedback_por_email, start_date=start_date)
         finally:
             browser.close()
 
@@ -403,11 +410,30 @@ def _get_arg_value(flag_prefix):
     return None
 
 
+def _resolve_start_date():
+    """
+    Traduce --next-week / --start-date=YYYY-MM-DD a un date concreto (el
+    lunes de la semana a planificar), o None si no se pasó ninguno de los
+    dos (comportamiento por defecto de get_planned_workouts_week).
+    """
+    start_date_str = _get_arg_value("--start-date=")
+    if start_date_str:
+        return datetime.strptime(start_date_str, "%Y-%m-%d").date()
+
+    if "--next-week" in sys.argv:
+        today = datetime.now().date()
+        dias_hasta_proximo_lunes = 7 - today.weekday()  # lunes=0 ... domingo=6
+        return today + timedelta(days=dias_hasta_proximo_lunes)
+
+    return None
+
+
 if __name__ == "__main__":
     if "--run-now" in sys.argv:
         athlete_id_filter = _get_arg_value("--athlete-id=")
         send_email = "--no-email" not in sys.argv
-        run_weekly_job(athlete_id_filter=athlete_id_filter, send_email=send_email)
+        start_date = _resolve_start_date()
+        run_weekly_job(athlete_id_filter=athlete_id_filter, send_email=send_email, start_date=start_date)
         print("Corrida manual terminada.")
     elif "--run-reminder-now" in sys.argv:
         athlete_id_filter = _get_arg_value("--athlete-id=")
