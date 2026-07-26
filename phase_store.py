@@ -92,3 +92,16 @@ def append_historial_entry(phase_state, fecha, peso_lb, deficit_pct, kcal_promed
         "razon": razon,
     })
     return phase_state
+
+
+def get_ultimos_alimentos(athlete_id):
+    """Devuelve la lista de alimentos usados en la corrida anterior de este atleta."""
+    all_states = _load_all()
+    state = all_states.get(athlete_id, {})
+    return state.get("ultimos_alimentos", [])
+
+
+def save_ultimos_alimentos(phase_state, nombres_usados):
+    """Guarda qué alimentos se usaron esta semana, para poder variar la próxima si lo piden."""
+    phase_state["ultimos_alimentos"] = sorted(set(nombres_usados))
+    return phase_state

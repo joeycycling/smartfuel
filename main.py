@@ -28,6 +28,7 @@ from trainingpeaks_client import (
     get_athlete_settings, extract_ftp, extract_age, extract_gender,
 )
 from prefs_loader import fetch_preferences_csv
+from feedback_loader import fetch_feedback_csv
 from phase_engine import (
     update_phase, protein_floor_g, protein_ceiling_g, protein_floor_g_por_tipo_dia,
     get_initial_deficit_pct, objetivo_label,
@@ -35,8 +36,8 @@ from phase_engine import (
 )
 from workout_kcal import estimate_week_kcal
 from meal_planner import build_daily_meal_plan, build_shopping_list
-from food_db import load_food_db
-from phase_store import get_phase_state, save_phase_state, append_historial_entry
+from food_db import load_food_db, get
+from phase_store import get_phase_state, save_phase_state, append_historial_entry, get_ultimos_alimentos, save_ultimos_alimentos
 from pdf_builder import build_weekly_pdf
 from email_sender import send_weekly_plan_email, send_weight_reminder_email
 
@@ -44,12 +45,14 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_pdfs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
-def process_athlete(page, athlete_prefs, db, send_email=True):
+def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email=None):
     """
     Corre el pipeline completo para un solo atleta.
     athlete_prefs: dict ya parseado por prefs_loader (una fila del sheet).
     send_email: si es False, genera el PDF pero NO lo envía (para probar
     sin arriesgarte a mandarle algo a nadie por accidente).
+    feedback_por_email: dict {email: feedback_dict} del form semanal de
+    feedback (alimentos a agregar/quitar, si quiere más variedad).
     """
     athlete_id = athlete_prefs.get("id_atleta")
     athlete_name = athlete_prefs.get("nombre") or "Atleta"
@@ -150,6 +153,44 @@ def process_athlete(page, athlete_prefs, db, send_email=True):
         prefs_semana = dict(athlete_prefs)
         prefs_semana["alimentos_evitar"] = list(athlete_prefs.get("alimentos_evitar", []))
 
+        # --- Feedback semanal del atleta (form aparte, solo ajusta OPCIONES
+        # de comida — nunca kcal/macros, eso sigue siendo automático según
+        # el algoritmo de peso). ---
+        athlete_email_lower = (athlete_prefs.get("email") or "").strip().lower()
+        feedback = (feedback_por_email or {}).get(athlete_email_lower)
+        alimentos_no_reconocidos = []
+        if feedback:
+            # Lo que pide QUITAR se suma a lo que ya evita
+            for nombre in feedback.get("alimentos_quitar", []):
+                if nombre and nombre.lower() not in [x.lower() for x in prefs_semana["alimentos_evitar"]]:
+                    prefs_semana["alimentos_evitar"].append(nombre)
+
+            # Lo que pide AGREGAR: si ya existe en la base, lo des-excluye
+            # (por si estaba en su evitar de antes); si no existe, se lista
+            # para que tú lo agregues a la base de alimentos.
+            for nombre in feedback.get("alimentos_agregar", []):
+                if not nombre:
+                    continue
+                if get(db, nombre):
+                    prefs_semana["alimentos_evitar"] = [
+                        x for x in prefs_semana["alimentos_evitar"] if x.lower() != nombre.lower()
+                    ]
+                else:
+                    alimentos_no_reconocidos.append(nombre)
+
+            if alimentos_no_reconocidos:
+                print(f"  [AVISO] {athlete_name} pidió agregar alimentos que no existen en la base "
+                      f"todavía: {', '.join(alimentos_no_reconocidos)} — avísale a Joey para agregarlos.")
+
+            # "Quiero más variedad" -> excluye lo usado la semana pasada
+            if feedback.get("quiere_variedad"):
+                ultimos = get_ultimos_alimentos(athlete_id)
+                for nombre in ultimos:
+                    if nombre.lower() not in [x.lower() for x in prefs_semana["alimentos_evitar"]]:
+                        prefs_semana["alimentos_evitar"].append(nombre)
+                print(f"  [FEEDBACK] {athlete_name} pidió más variedad — evitando {len(ultimos)} "
+                      f"alimentos usados la semana pasada.")
+
         for dia in daily_targets:
             day_type = classify_day_type(sessions_by_day.get(dia, []))
             protein_floor = protein_floor_g_por_tipo_dia(athlete_weight_kg, day_type)
@@ -158,6 +199,7 @@ def process_athlete(page, athlete_prefs, db, send_email=True):
                 daily_targets[dia], protein_floor, db, prefs_semana,
                 day_sessions=sessions_by_day.get(dia, []),
                 protein_ceiling_g_val=protein_ceiling,
+                tdee_dia_val=tdee_by_day.get(dia),
             )
             daily_plans[dia] = plan
 
@@ -175,7 +217,13 @@ def process_athlete(page, athlete_prefs, db, send_email=True):
                     total_real += plan["pre_entreno"]["kcal_total"]
                 if plan.get("post_entreno"):
                     total_real += plan["post_entreno"]["kcal_total"]
+                if plan.get("intra_entreno"):
+                    total_real += plan["intra_entreno"].get("kcal_total", 0)
                 total_real = round(total_real)
+
+                if plan.get("_aviso_piso_no_cumplido"):
+                    print(f"  [AVISO] {dia}: el piso de proteína no se pudo cumplir del todo sin "
+                          f"pasar del TDEE del día (~{tdee_by_day.get(dia, 0):.0f} kcal) — revisa manualmente si hace falta.")
 
                 if abs(total_real - daily_targets[dia]) > 0:
                     print(f"  [AVISO] {dia}: kcal ajustadas de {daily_targets[dia]} a {total_real} "
@@ -214,6 +262,23 @@ def process_athlete(page, athlete_prefs, db, send_email=True):
                     alt_kcal, protein_floor_descanso, db, prefs_semana, day_sessions=[]
                 )
                 alt_plans[dia] = {"kcal": alt_kcal, "plan": alt_plan}
+
+        # Guardar qué alimentos se usaron esta semana (Opción A de cada
+        # comida) — así, si el atleta pide "más variedad" la próxima
+        # semana, se pueden evitar y forzar combinaciones distintas.
+        nombres_usados_semana = set()
+        for plan in daily_plans.values():
+            if not plan:
+                continue
+            for slot in ("desayuno", "almuerzo", "merienda", "cena"):
+                meal = plan.get(slot, {})
+                opcion_a_dia = meal.get("opcion_a") if meal else None
+                if not opcion_a_dia:
+                    continue
+                for c in opcion_a_dia["componentes"]:
+                    nombres_usados_semana.add(c["nombre"])
+        phase_state = save_ultimos_alimentos(phase_state, nombres_usados_semana)
+        save_phase_state(athlete_id, phase_state)
 
         # 6. PDF
         week_label = datetime.now().strftime("%d de %B, %Y")
@@ -270,13 +335,24 @@ def run_weekly_job(athlete_id_filter=None, send_email=True):
     all_prefs = fetch_preferences_csv(csv_url)
     db = load_food_db()
 
+    # Form de feedback semanal (opcional) — si no está configurado, el
+    # bot sigue funcionando igual, solo sin aplicar ajustes de feedback.
+    feedback_por_email = {}
+    feedback_csv_url = os.environ.get("FEEDBACK_CSV_URL")
+    if feedback_csv_url:
+        try:
+            feedback_por_email = fetch_feedback_csv(feedback_csv_url)
+        except Exception:
+            print("[AVISO] No se pudo leer el form de feedback semanal, se continúa sin él.")
+            traceback.print_exc()
+
     with sync_playwright() as p:
         page, browser = login_and_get_page(p)
         try:
             for athlete_prefs in all_prefs:
                 if athlete_id_filter and str(athlete_prefs.get("id_atleta")) != str(athlete_id_filter):
                     continue
-                process_athlete(page, athlete_prefs, db, send_email=send_email)
+                process_athlete(page, athlete_prefs, db, send_email=send_email, feedback_por_email=feedback_por_email)
         finally:
             browser.close()
 

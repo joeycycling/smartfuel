@@ -101,7 +101,8 @@ def demo():
         protein_floor = protein_floor_g_por_tipo_dia(athlete_weight_kg, day_type_meal)
         plan, diff = build_daily_meal_plan(
             daily_targets[day], protein_floor, db, prefs,
-            day_sessions=sessions_by_day.get(day, [])
+            day_sessions=sessions_by_day.get(day, []),
+            tdee_dia_val=tdee_by_day.get(day),
         )
         daily_plans[day] = plan
 
@@ -114,6 +115,8 @@ def demo():
                 total_real += plan["pre_entreno"]["kcal_total"]
             if plan.get("post_entreno"):
                 total_real += plan["post_entreno"]["kcal_total"]
+            if plan.get("intra_entreno"):
+                total_real += plan["intra_entreno"].get("kcal_total", 0)
             total_real = round(total_real)
             if abs(total_real - daily_targets[day]) > 0:
                 print(f"  [AVISO] {day}: kcal ajustadas de {daily_targets[day]} a {total_real} para cumplir el piso de proteína.")

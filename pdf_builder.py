@@ -110,7 +110,7 @@ def _styles():
                                       textColor=colors.white, fontSize=13, leading=16),
         "slot_label": ParagraphStyle("SlotLabel", parent=styles["Normal"], fontSize=9,
                                       textColor=BRAND_DARK, fontName="Helvetica-Bold"),
-        "slot_value": ParagraphStyle("SlotValue", parent=styles["Normal"], fontSize=9, leading=12),
+        "slot_value": ParagraphStyle("SlotValue", parent=styles["Normal"], fontSize=8, leading=10),
         "cover_label": ParagraphStyle("CoverLabel", parent=styles["Normal"], fontSize=11,
                                        textColor=BRAND_ORANGE, fontName="Helvetica-Bold"),
         "cover_value": ParagraphStyle("CoverValue", parent=styles["Normal"], fontSize=11,
@@ -461,11 +461,11 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("LEFTPADDING", (0, 0), (-1, -1), 10),
             ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-            ("TOPPADDING", (0, 0), (-1, -1), 8),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
         ]))
         story.append(header_table)
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 5))
 
         plan = daily_plans.get(dia) or {}
         main_slots = ["desayuno", "almuerzo", "merienda", "cena"]
@@ -490,21 +490,33 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             if fuel_meal:
                 p, c_, f = _meal_macros(fuel_meal)
                 tot_p += p; tot_c += c_; tot_f += f
+        if plan.get("intra_entreno"):
+            # El fuel intra-entreno es prácticamente carbohidrato puro
+            tot_c += plan["intra_entreno"].get("kcal_total", 0) / 4
 
         stat_labels = ["KCAL", "PROTEÍNA", "CARBOHIDRATOS", "GRASA"]
         stat_values = [f"{kcal_obj:.0f}", f"{tot_p:.0f}g", f"{tot_c:.0f}g", f"{tot_f:.0f}g"]
-        col_widths = [1.675 * inch] * 4
+        col_widths = [1.34 * inch] * 4
+
+        burn_val = (daily_burn or {}).get(dia)
+        if burn_val:
+            stat_labels.append("GASTO ENTRENO")
+            stat_values.append(f"~{burn_val:.0f}")
+            col_widths.append(1.34 * inch)
 
         deficit_val = daily_deficit.get(dia)
         if deficit_val is not None:
             stat_labels.append("DÉFICIT EST.")
             signo = "+" if deficit_val < 0 else "-" if deficit_val > 0 else ""
             stat_values.append(f"{signo}{abs(deficit_val):.0f}")
-            col_widths = [1.34 * inch] * 5
+            col_widths.append(1.34 * inch)
+
+        # Ancho parejo entre todas las columnas presentes
+        col_widths = [6.7 * inch / len(stat_values)] * len(stat_values)
 
         stat_row = Table([
             [Paragraph(v, ParagraphStyle("StatVal", parent=getSampleStyleSheet()["Normal"],
-                                          fontSize=15, fontName="Helvetica-Bold", textColor=BRAND_ORANGE, alignment=1))
+                                          fontSize=14, fontName="Helvetica-Bold", textColor=BRAND_ORANGE, alignment=1))
              for v in stat_values],
             [Paragraph(l, ParagraphStyle("StatLbl", parent=getSampleStyleSheet()["Normal"],
                                           fontSize=7, textColor=colors.HexColor("#666666"), alignment=1))
@@ -513,24 +525,25 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
         stat_row.setStyle(TableStyle([
             ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
             ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#EEEEEE")),
-            ("TOPPADDING", (0, 0), (-1, 0), 8), ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
-            ("TOPPADDING", (0, 1), (-1, 1), 0), ("BOTTOMPADDING", (0, 1), (-1, 1), 8),
+            ("TOPPADDING", (0, 0), (-1, 0), 5), ("BOTTOMPADDING", (0, 0), (-1, 0), 1),
+            ("TOPPADDING", (0, 1), (-1, 1), 0), ("BOTTOMPADDING", (0, 1), (-1, 1), 5),
         ]))
         story.append(stat_row)
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 5))
 
         # Explicación de por qué el día tiene esas kcal específicas
         avg_semanal = (phase_info or {}).get("kcal_actual", kcal_obj)
         explicacion = _build_day_explanation(kcal_obj, avg_semanal, sessions_by_day.get(dia, []))
-        expl_table = Table([[Paragraph(explicacion, st["slot_value"])]], colWidths=[6.7 * inch])
+        expl_style = ParagraphStyle("ExplText", parent=getSampleStyleSheet()["Normal"], fontSize=8, leading=10)
+        expl_table = Table([[Paragraph(explicacion, expl_style)]], colWidths=[6.7 * inch])
         expl_table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F2F2F2")),
             ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#CCCCCC")),
-            ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-            ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ]))
         story.append(expl_table)
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 5))
 
         rows = []
         row_slot_order = []
@@ -572,9 +585,9 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             meal_style = [
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                 ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, colors.HexColor("#F7F7F7")]),
             ]
             for i, slot in enumerate(row_slot_order):
@@ -595,7 +608,7 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             fuel_rows.append([
                 Paragraph("Durante el entreno", st["slot_label"]),
                 Paragraph(plan["intra_entreno"]["texto"], st["slot_value"]),
-                Paragraph("", st["slot_value"]),
+                Paragraph(f"~{plan['intra_entreno'].get('kcal_total', 0):.0f} kcal", st["slot_value"]),
             ])
         if plan.get("post_entreno"):
             fuel_rows.append([
@@ -605,39 +618,32 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
             ])
 
         if fuel_rows:
-            story.append(Spacer(1, 6))
+            story.append(Spacer(1, 4))
             fuel_table = Table(fuel_rows, colWidths=[1.5 * inch, 4.3 * inch, 0.9 * inch])
             fuel_table.setStyle(TableStyle([
                 ("GRID", (0, 0), (-1, -1), 0.5, BRAND_ORANGE),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                 ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.HexColor("#FFF3EA"), colors.white]),
             ]))
             story.append(fuel_table)
 
         alt = alt_plans.get(dia)
         if alt:
-            story.append(Spacer(1, 10))
+            story.append(Spacer(1, 5))
             alt_header = Table([[Paragraph(
                 f"¿NO VAS A PODER ENTRENAR HOY? — Usa este menú en su lugar ({alt['kcal']:.0f} kcal)",
-                ParagraphStyle("AltHeader", parent=getSampleStyleSheet()["Normal"], fontSize=9,
+                ParagraphStyle("AltHeader", parent=getSampleStyleSheet()["Normal"], fontSize=8,
                                textColor=colors.white, fontName="Helvetica-Bold"),
             )]], colWidths=[6.7 * inch])
             alt_header.setStyle(TableStyle([
                 ("BACKGROUND", (0, 0), (-1, -1), BRAND_DARK),
-                ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
             ]))
             story.append(alt_header)
-            story.append(Paragraph(
-                "Sin el gasto del entreno, tu piso de proteína también baja un poco (día de descanso) — "
-                "lo que más se reduce es el carbohidrato, ya que no hace falta reponer esa energía extra.",
-                ParagraphStyle("AltNote", parent=getSampleStyleSheet()["Normal"], fontSize=8,
-                               textColor=colors.HexColor("#666666"), fontName="Helvetica-Oblique",
-                               spaceBefore=4, spaceAfter=4),
-            ))
             alt_rows = []
             for alt_slot in ("desayuno", "almuerzo", "merienda", "cena"):
                 alt_meal = (alt["plan"] or {}).get(alt_slot, {}).get("opcion_a")
@@ -654,18 +660,11 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
                 alt_table.setStyle(TableStyle([
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#DDDDDD")),
                     ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
                     ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.HexColor("#EFEFEF"), colors.white]),
                 ]))
                 story.append(alt_table)
-
-        story.append(Spacer(1, 12))
-        tip = DAILY_TIPS[idx % len(DAILY_TIPS)]
-        story.append(Paragraph(f"Tip: {tip}", ParagraphStyle(
-            "TipFooter", parent=getSampleStyleSheet()["Normal"], fontSize=8,
-            textColor=colors.HexColor("#888888"), fontName="Helvetica-Oblique",
-        )))
 
         story.append(PageBreak())
 

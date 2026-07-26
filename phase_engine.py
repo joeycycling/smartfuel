@@ -148,8 +148,8 @@ def update_phase(weight_entries, phase_state, objetivo=None):
     return phase_state, reason
 
 
-def protein_floor_g(weight_lb, g_per_lb=1.0):
-    """Piso de proteína diario: 1g por lb de peso corporal (fijo, no baja con las kcal)."""
+def protein_floor_g(weight_lb, g_per_lb=0.85):
+    """Piso de proteína diario: ~0.85g por lb de peso corporal (rango 0.7-1.0g/lb)."""
     return round(weight_lb * g_per_lb, 1)
 
 
@@ -160,9 +160,9 @@ def protein_floor_g(weight_lb, g_per_lb=1.0):
 # se mantiene el piso completo (2.2g/kg), ya que ahí sí hace falta
 # proteger la recuperación al máximo.
 PROTEIN_FLOOR_G_POR_KG = {
-    "descanso": 1.5,
-    "normal": 2.2,
-    "clave": 2.2,
+    "descanso": 1.54,  # ~0.7g/lb
+    "normal": 1.87,    # ~0.85g/lb
+    "clave": 2.2,      # ~1.0g/lb (tope superior del rango pedido)
 }
 
 
@@ -171,12 +171,11 @@ def protein_floor_g_por_tipo_dia(weight_kg, day_type):
     return round(weight_kg * g_per_kg, 1)
 
 
-def protein_ceiling_g(weight_lb, g_per_lb=1.1):
+def protein_ceiling_g(weight_lb, g_per_lb=1.0):
     """
     Techo máximo de proteína diaria — más allá de esto no aporta beneficio
     real y desplaza carbohidratos que el atleta sí necesita para rendir.
-    1.1g/lb ≈ 2.4g/kg, el límite superior del rango recomendado (1.8-2.4g/kg)
-    para preservar masa muscular en déficit sin excederse innecesariamente.
+    1.0g/lb ≈ 2.2g/kg, tope superior del rango pedido (0.7-1.0g/lb).
     """
     return round(weight_lb * g_per_lb, 1)
 
@@ -237,7 +236,10 @@ def compute_daily_kcal(tdee_day, deficit_pct):
 DAY_TYPE_MODIFIER = {
     "descanso": 1.3,   # más déficit — no hay entreno que proteger ese día
     "normal": 1.0,      # el % base, sin cambios
-    "clave": 0.4,       # mucho menos déficit — proteger el rendimiento/recuperación
+    "clave": 1.0,       # el piso de proteína + el fuel del entreno ya protegen
+                        # naturalmente estos días (consumen buena parte del
+                        # presupuesto) — reducir el % aparte lo dejaba
+                        # prácticamente sin déficit real.
 }
 
 

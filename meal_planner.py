@@ -353,7 +353,7 @@ def build_composed_dish(target_kcal, prefs, slot, target_protein_g=None, costo_f
 # según intensidad (mismas bandas del PDF original "Training Fuel Trial 4").
 BIKE_CHO_PER_HOUR = {
     "suave": (40, 50),
-    "moderado": (50, 70),
+    "moderado": (60, 80),
     "intervalos": (70, 80),
     "fondo": (90, 100),
 }
@@ -367,9 +367,13 @@ def bike_intra_workout_recommendation(bike_sessions):
     Genera el texto de recomendación de carbohidratos durante el entreno
     de bici, usando la banda de la sesión MÁS EXIGENTE del día (si hay
     varias sesiones de bici), no siempre "moderado" a la fuerza.
-    Esto es informativo (no se descuenta del kcal objetivo del día,
-    igual que en el PDF original donde el "fuel" de entreno es aparte
-    del plan base de comidas).
+
+    Ahora SÍ incluye kcal_total (punto medio del rango de g/hr x 4kcal/g)
+    — esas kcal son consumo real durante el rodaje y se reservan del
+    presupuesto del día, igual que pre/post-entreno. Antes solo era
+    texto informativo sin contar, lo que dejaba el "déficit" mostrado
+    más chico de lo real (el atleta terminaba comiendo más de lo que
+    el plan indicaba, si seguía la recomendación de fuel).
     """
     total_min = sum(s.get("duration_min", 0) for s in bike_sessions)
     intensidad_mas_exigente = max(
@@ -381,12 +385,15 @@ def bike_intra_workout_recommendation(bike_sessions):
     hours = total_min / 60
     lo_total = round(lo * hours)
     hi_total = round(hi * hours)
+    gramos_punto_medio = (lo_total + hi_total) / 2
+    kcal_total = round(gramos_punto_medio * 4)  # ~4kcal por gramo de carbohidrato
     return {
         "texto": (
             f"{lo}-{hi}g de carbohidratos por hora ({intensidad_mas_exigente}) "
             f"(~{lo_total}-{hi_total}g en total para los {round(hours,1)}h de bici) — "
             f"bebida isotónica, gel o fruta de fácil digestión"
         ),
+        "kcal_total": kcal_total,
     }
 
 
@@ -555,7 +562,8 @@ def build_post_entreno():
 
 
 def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
-                           day_sessions=None, no_puede_cocinar=False, protein_ceiling_g_val=None):
+                           day_sessions=None, no_puede_cocinar=False, protein_ceiling_g_val=None,
+                           tdee_dia_val=None):
     """
     Arma el plan de comidas del día:
     - desayuno/almuerzo/merienda/cena, CADA UNA con 2 opciones (A y B)
@@ -575,17 +583,19 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
     bike_sessions = [s for s in day_sessions if s.get("sport") == "bike"]
     dia_alta_demanda = classify_day_type(day_sessions) == "clave"
 
-    # Si hay bici, el pre/post-entreno se elige PRIMERO y se reserva su kcal
-    # del presupuesto total del día — así el número que ve el atleta en el
-    # header (target_kcal) representa TODO lo que va a comer ese día
-    # (comidas principales + fuel de entreno), no las comidas principales
-    # aparte y el fuel como un extra no contado.
-    pre_entreno = post_entreno = None
+    # Si hay bici, el pre/intra/post-entreno se elige PRIMERO y se reserva
+    # su kcal del presupuesto total del día — así el número que ve el
+    # atleta en el header (target_kcal) representa TODO lo que va a
+    # consumir ese día (comidas principales + fuel de entreno, INCLUYENDO
+    # las kcal reales de los carbohidratos que toma durante el rodaje),
+    # no las comidas principales aparte y el fuel como un extra no contado.
+    pre_entreno = post_entreno = intra_entreno = None
     reservado_kcal = 0
     if bike_sessions:
         pre_entreno = build_pre_entreno()
         post_entreno = build_post_entreno()
-        reservado_kcal = pre_entreno["kcal_total"] + post_entreno["kcal_total"]
+        intra_entreno = bike_intra_workout_recommendation(bike_sessions)
+        reservado_kcal = pre_entreno["kcal_total"] + post_entreno["kcal_total"] + intra_entreno["kcal_total"]
 
     target_kcal_comidas = max(target_kcal - reservado_kcal, 0)
 
@@ -673,7 +683,7 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
 
     if best_plan and bike_sessions:
         best_plan["pre_entreno"] = pre_entreno
-        best_plan["intra_entreno"] = bike_intra_workout_recommendation(bike_sessions)
+        best_plan["intra_entreno"] = intra_entreno
         best_plan["post_entreno"] = post_entreno
 
     # --- Piso de proteína diario — verificación final (nunca queda por debajo) ---
@@ -684,11 +694,24 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
     # y evita porciones de proteína excesivamente grandes en una comida.
     if best_plan:
         main_slots_presentes = [s for s in ("desayuno", "almuerzo", "merienda", "cena") if s in best_plan]
+        piso_no_cumplido_por_tdee = False
 
         for _intento_piso in range(3):
             total_proteina_dia = sum(best_plan[s]["opcion_a"].get("proteina_g_total", 0) for s in main_slots_presentes)
             if total_proteina_dia >= protein_floor_g_val or not main_slots_presentes:
                 break
+
+            # Techo: el total del día NUNCA debe pasar del TDEE (mantenimiento
+            # real de ese día, entreno incluido) — es físicamente imposible
+            # consumir más de lo que el cuerpo gasta sin que sea un
+            # superávit real. Si ya se llegó ahí, se deja de empujar la
+            # proteína (aunque quede corta) y se avisa en vez de fallar en
+            # silencio con un "déficit" que en realidad es superávit.
+            if tdee_dia_val is not None:
+                total_actual = sum(best_plan[s]["opcion_a"]["kcal_total"] for s in main_slots_presentes) + reservado_kcal
+                if total_actual >= tdee_dia_val:
+                    piso_no_cumplido_por_tdee = True
+                    break
 
             faltante_total = protein_floor_g_val - total_proteina_dia
             faltante_por_slot = faltante_total / len(main_slots_presentes)
@@ -739,28 +762,46 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
 
         # Si el tope de 320g impide llegar al piso repartiendo, como último
         # recurso se agrega un componente de proteína extra a la comida más
-        # grande (el piso manda sobre la preferencia de porciones moderadas).
+        # grande — pero SOLO hasta donde el TDEE del día lo permita; si ya
+        # se llegó al techo físico, se deja el piso corto y se avisa.
         total_proteina_dia = sum(best_plan[s]["opcion_a"].get("proteina_g_total", 0) for s in main_slots_presentes)
-        if total_proteina_dia < protein_floor_g_val and main_slots_presentes:
+        if total_proteina_dia < protein_floor_g_val and main_slots_presentes and not piso_no_cumplido_por_tdee:
             faltante_final = protein_floor_g_val - total_proteina_dia
-            slot_mas_grande = max(main_slots_presentes, key=lambda s: best_plan[s]["opcion_a"]["kcal_total"])
-            proteinas_disponibles = _pick_candidates(db, "proteina", prefs)
-            if proteinas_disponibles:
-                # La más densa en proteína por gramo, no al azar — así el
-                # tope de 320g (o el específico del alimento) casi nunca
-                # se alcanza antes de cerrar el hueco.
-                extra_proteina = max(proteinas_disponibles, key=lambda p: p["proteina_g"] / max(p["cantidad_base"], 1))
-                cantidad_extra = (faltante_final / extra_proteina["proteina_g"]) * extra_proteina["cantidad_base"] \
-                    if extra_proteina["proteina_g"] else 0
-                if extra_proteina["unidad_medida"] == "gramos":
-                    cantidad_extra = min(cantidad_extra, PROTEIN_MAX_GRAMOS_PORCION)
-                extra_scaled = scale_food(extra_proteina, cantidad_extra)
-                opcion_a_extra = best_plan[slot_mas_grande]["opcion_a"]
-                opcion_a_extra["componentes"].append(extra_scaled)
-                opcion_a_extra["kcal_total"] = round(sum(x["kcal"] for x in opcion_a_extra["componentes"]), 1)
-                opcion_a_extra["proteina_g_total"] = round(
-                    sum(x.get("proteina_g", 0) for x in opcion_a_extra["componentes"]), 1
-                )
+            total_actual = sum(best_plan[s]["opcion_a"]["kcal_total"] for s in main_slots_presentes) + reservado_kcal
+            margen_kcal_disponible = (tdee_dia_val - total_actual) if tdee_dia_val is not None else float("inf")
+
+            if margen_kcal_disponible <= 0:
+                piso_no_cumplido_por_tdee = True
+            else:
+                slot_mas_grande = max(main_slots_presentes, key=lambda s: best_plan[s]["opcion_a"]["kcal_total"])
+                proteinas_disponibles = _pick_candidates(db, "proteina", prefs)
+                if proteinas_disponibles:
+                    # La más densa en proteína por gramo, no al azar — así el
+                    # tope de 320g (o el específico del alimento) casi nunca
+                    # se alcanza antes de cerrar el hueco.
+                    extra_proteina = max(proteinas_disponibles, key=lambda p: p["proteina_g"] / max(p["cantidad_base"], 1))
+                    cantidad_extra = (faltante_final / extra_proteina["proteina_g"]) * extra_proteina["cantidad_base"] \
+                        if extra_proteina["proteina_g"] else 0
+                    if extra_proteina["unidad_medida"] == "gramos":
+                        cantidad_extra = min(cantidad_extra, PROTEIN_MAX_GRAMOS_PORCION)
+                    extra_scaled = scale_food(extra_proteina, cantidad_extra)
+                    # Recortar si aun así se pasaría del margen de TDEE disponible
+                    if extra_scaled["kcal"] > margen_kcal_disponible:
+                        factor_margen = max(margen_kcal_disponible / extra_scaled["kcal"], 0)
+                        for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
+                            extra_scaled[macro] = round(extra_scaled[macro] * factor_margen, 1)
+                        piso_no_cumplido_por_tdee = True
+                    opcion_a_extra = best_plan[slot_mas_grande]["opcion_a"]
+                    opcion_a_extra["componentes"].append(extra_scaled)
+                    opcion_a_extra["kcal_total"] = round(sum(x["kcal"] for x in opcion_a_extra["componentes"]), 1)
+                    opcion_a_extra["proteina_g_total"] = round(
+                        sum(x.get("proteina_g", 0) for x in opcion_a_extra["componentes"]), 1
+                    )
+
+        if piso_no_cumplido_por_tdee and best_plan:
+            best_plan["_aviso_piso_no_cumplido"] = True
+
+
 
         # Techo de proteína — si se pasa del máximo (proteína usada de
         # relleno en vez de carbs), recorta REPARTIENDO entre varias comidas
@@ -802,6 +843,8 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
             total_final += best_plan["pre_entreno"]["kcal_total"]
         if best_plan.get("post_entreno"):
             total_final += best_plan["post_entreno"]["kcal_total"]
+        if best_plan.get("intra_entreno"):
+            total_final += best_plan["intra_entreno"].get("kcal_total", 0)
         best_diff = abs(total_final - target_kcal)
 
     return best_plan, best_diff
