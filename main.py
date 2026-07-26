@@ -230,9 +230,12 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
                     print(f"  [AVISO] {dia}: el piso de proteína no se pudo cumplir del todo sin "
                           f"pasar del TDEE del día (~{tdee_by_day.get(dia, 0):.0f} kcal) — revisa manualmente si hace falta.")
 
-                if abs(total_real - daily_targets[dia]) > 0:
+                if total_real > daily_targets[dia]:
                     print(f"  [AVISO] {dia}: kcal ajustadas de {daily_targets[dia]} a {total_real} "
                           f"para cumplir el piso de proteína.")
+                elif total_real < daily_targets[dia]:
+                    print(f"  [AVISO] {dia}: kcal ajustadas de {daily_targets[dia]} a {total_real} "
+                          f"(ajuste por combinación de alimentos, no por el piso de proteína).")
                 daily_targets[dia] = total_real
                 daily_deficit[dia] = round(tdee_by_day[dia] - total_real)
 
