@@ -561,6 +561,55 @@ def build_post_entreno():
     }
 
 
+def _offset_kcal_from_carb(componentes, db, delta_kcal, excluir_nombre=None):
+    """
+    Recorta hasta delta_kcal de los componentes tipo carbohidrato de una
+    comida (el más grande primero), sin bajar de SCALE_MIN x su cantidad
+    base — así cuando se refuerza la proteína de una comida para llegar al
+    piso, no se agregan kcal nuevas al día: se "cambia" carbo por proteína
+    dentro del mismo presupuesto de esa comida, en vez de solo inflar la
+    proteína y dejar la comida desbalanceada (mucha proteína, poco carbo).
+    Devuelve cuántas kcal se lograron recortar en total (puede ser menos
+    de delta_kcal si los carbs ya están en su mínimo).
+    """
+    if delta_kcal <= 0:
+        return 0
+
+    candidatos_carb = [
+        c for c in componentes
+        if c.get("nombre") != excluir_nombre and c["unidad"] != "porcion"
+        and (get(db, c["nombre"]) or {}).get("categoria") == "carbohidrato"
+    ]
+    candidatos_carb.sort(key=lambda c: c["kcal"], reverse=True)
+
+    recortado_total = 0
+    restante = delta_kcal
+    for c in candidatos_carb:
+        if restante <= 0:
+            break
+        item_db = get(db, c["nombre"])
+        if not item_db:
+            continue
+        piso_kcal = item_db["kcal"] * SCALE_MIN
+        margen_recorte = max(c["kcal"] - piso_kcal, 0)
+        recorte = min(restante, margen_recorte)
+        if recorte <= 0:
+            continue
+
+        # scale_food redondea a cantidades realistas (unidades enteras,
+        # gramos en múltiplos de 25) — antes se escalaba a mano y quedaban
+        # cantidades como "0.6 tortilla".
+        cantidad_objetivo = c["cantidad"] * max((c["kcal"] - recorte) / c["kcal"], 0) if c["kcal"] else 0
+        nuevo = scale_food(item_db, cantidad_objetivo)
+        recorte_real = c["kcal"] - nuevo["kcal"]
+        c.update(nuevo)
+
+        recortado_total += recorte_real
+        restante -= recorte_real
+
+    return recortado_total
+
+
 def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
                            day_sessions=None, no_puede_cocinar=False, protein_ceiling_g_val=None,
                            tdee_dia_val=None):
@@ -736,67 +785,87 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
                 objetivo_reforzar = con_espacio or candidatos_reforzar
 
                 for c in objetivo_reforzar[:1]:
-                    if True:
-                        factor_extra = 1 + (faltante_por_slot / max(c["proteina_g"], 1))
-                        nuevo = dict(c)
-                        for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
-                            if macro in nuevo:
-                                nuevo[macro] = round(nuevo[macro] * factor_extra, 1)
-                        # Tope: el más estricto entre el genérico (320g) y el
-                        # específico del alimento (ej. 80g salami, 4ud huevo)
-                        # — se aplica sin importar si es gramos o unidad.
-                        tope_especifico = CANTIDAD_MAXIMA_REALISTA.get(nuevo["nombre"].lower())
-                        tope_aplicable = min(PROTEIN_MAX_GRAMOS_PORCION, tope_especifico) if tope_especifico else PROTEIN_MAX_GRAMOS_PORCION
-                        if nuevo["cantidad"] > tope_aplicable:
-                            factor_tope = tope_aplicable / nuevo["cantidad"]
-                            for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
-                                nuevo[macro] = round(nuevo[macro] * factor_tope, 1)
-                        opcion_a_reforzada["componentes"][opcion_a_reforzada["componentes"].index(c)] = nuevo
-                        opcion_a_reforzada["kcal_total"] = round(
-                            sum(x["kcal"] for x in opcion_a_reforzada["componentes"]), 1
-                        )
-                        opcion_a_reforzada["proteina_g_total"] = round(
-                            sum(x.get("proteina_g", 0) for x in opcion_a_reforzada["componentes"]), 1
-                        )
-                        break
+                    item_db = get(db, c["nombre"])
+                    if not item_db:
+                        continue
+
+                    factor_extra = 1 + (faltante_por_slot / max(c["proteina_g"], 1))
+                    cantidad_objetivo = c["cantidad"] * factor_extra
+
+                    # Tope: el más estricto entre el genérico (320g) y el
+                    # específico del alimento (ej. 80g salami, 4ud huevo)
+                    # — se aplica sin importar si es gramos o unidad.
+                    tope_especifico = CANTIDAD_MAXIMA_REALISTA.get(c["nombre"].lower())
+                    tope_aplicable = min(PROTEIN_MAX_GRAMOS_PORCION, tope_especifico) if tope_especifico else PROTEIN_MAX_GRAMOS_PORCION
+                    cantidad_objetivo = min(cantidad_objetivo, tope_aplicable)
+
+                    # scale_food redondea a números realistas (huevos/unidades
+                    # enteras, gramos en múltiplos de 25) — antes se escalaba
+                    # a mano y quedaban cantidades como "3.9 huevo".
+                    nuevo = scale_food(item_db, cantidad_objetivo)
+
+                    # No agregar kcal nuevas al día: lo que suba la
+                    # proteína aquí se recorta del carbo de la MISMA
+                    # comida, para que la comida quede balanceada (no
+                    # solo "más proteína, mismo carbo") y el total del
+                    # día no se desvíe del objetivo original.
+                    delta_kcal = nuevo["kcal"] - c["kcal"]
+                    opcion_a_reforzada["componentes"][opcion_a_reforzada["componentes"].index(c)] = nuevo
+                    _offset_kcal_from_carb(
+                        opcion_a_reforzada["componentes"], db, delta_kcal, excluir_nombre=nuevo["nombre"]
+                    )
+                    opcion_a_reforzada["kcal_total"] = round(
+                        sum(x["kcal"] for x in opcion_a_reforzada["componentes"]), 1
+                    )
+                    opcion_a_reforzada["proteina_g_total"] = round(
+                        sum(x.get("proteina_g", 0) for x in opcion_a_reforzada["componentes"]), 1
+                    )
+                    break
 
         # Si el tope de 320g impide llegar al piso repartiendo, como último
         # recurso se agrega un componente de proteína extra a la comida más
-        # grande — pero SOLO hasta donde el TDEE del día lo permita; si ya
-        # se llegó al techo físico, se deja el piso corto y se avisa.
+        # grande — pero SIN sumar kcal nuevas al día: se recorta el carbo de
+        # esa misma comida por el mismo tanto (se "cambia" carbo por
+        # proteína), así la comida no queda desbalanceada ni el total del
+        # día se desvía del objetivo. Si el carbo ya está en su mínimo y no
+        # alcanza a absorber todo, el remanente sí se avisa contra el TDEE.
         total_proteina_dia = sum(best_plan[s]["opcion_a"].get("proteina_g_total", 0) for s in main_slots_presentes)
         if total_proteina_dia < protein_floor_g_val and main_slots_presentes and not piso_no_cumplido_por_tdee:
             faltante_final = protein_floor_g_val - total_proteina_dia
-            total_actual = sum(best_plan[s]["opcion_a"]["kcal_total"] for s in main_slots_presentes) + reservado_kcal
-            margen_kcal_disponible = (tdee_dia_val - total_actual) if tdee_dia_val is not None else float("inf")
+            slot_mas_grande = max(main_slots_presentes, key=lambda s: best_plan[s]["opcion_a"]["kcal_total"])
+            proteinas_disponibles = _pick_candidates(db, "proteina", prefs)
+            if proteinas_disponibles:
+                # La más densa en proteína por gramo, no al azar — así el
+                # tope de 320g (o el específico del alimento) casi nunca
+                # se alcanza antes de cerrar el hueco.
+                extra_proteina = max(proteinas_disponibles, key=lambda p: p["proteina_g"] / max(p["cantidad_base"], 1))
+                cantidad_extra = (faltante_final / extra_proteina["proteina_g"]) * extra_proteina["cantidad_base"] \
+                    if extra_proteina["proteina_g"] else 0
+                if extra_proteina["unidad_medida"] == "gramos":
+                    cantidad_extra = min(cantidad_extra, PROTEIN_MAX_GRAMOS_PORCION)
+                extra_scaled = scale_food(extra_proteina, cantidad_extra)
 
-            if margen_kcal_disponible <= 0:
-                piso_no_cumplido_por_tdee = True
-            else:
-                slot_mas_grande = max(main_slots_presentes, key=lambda s: best_plan[s]["opcion_a"]["kcal_total"])
-                proteinas_disponibles = _pick_candidates(db, "proteina", prefs)
-                if proteinas_disponibles:
-                    # La más densa en proteína por gramo, no al azar — así el
-                    # tope de 320g (o el específico del alimento) casi nunca
-                    # se alcanza antes de cerrar el hueco.
-                    extra_proteina = max(proteinas_disponibles, key=lambda p: p["proteina_g"] / max(p["cantidad_base"], 1))
-                    cantidad_extra = (faltante_final / extra_proteina["proteina_g"]) * extra_proteina["cantidad_base"] \
-                        if extra_proteina["proteina_g"] else 0
-                    if extra_proteina["unidad_medida"] == "gramos":
-                        cantidad_extra = min(cantidad_extra, PROTEIN_MAX_GRAMOS_PORCION)
-                    extra_scaled = scale_food(extra_proteina, cantidad_extra)
-                    # Recortar si aun así se pasaría del margen de TDEE disponible
-                    if extra_scaled["kcal"] > margen_kcal_disponible:
-                        factor_margen = max(margen_kcal_disponible / extra_scaled["kcal"], 0)
-                        for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
-                            extra_scaled[macro] = round(extra_scaled[macro] * factor_margen, 1)
+                opcion_a_extra = best_plan[slot_mas_grande]["opcion_a"]
+                opcion_a_extra["componentes"].append(extra_scaled)
+                recortado = _offset_kcal_from_carb(
+                    opcion_a_extra["componentes"], db, extra_scaled["kcal"], excluir_nombre=extra_scaled["nombre"]
+                )
+                opcion_a_extra["kcal_total"] = round(sum(x["kcal"] for x in opcion_a_extra["componentes"]), 1)
+                opcion_a_extra["proteina_g_total"] = round(
+                    sum(x.get("proteina_g", 0) for x in opcion_a_extra["componentes"]), 1
+                )
+
+                # Si el carbo no tenía margen para absorber todo, lo que
+                # sobró sí sube el total del día — solo ahí se compara
+                # contra el TDEE para avisar (no para bloquear, ya se
+                # agregó lo mínimo posible sin alternativa mejor).
+                residual_kcal = extra_scaled["kcal"] - recortado
+                if residual_kcal > 0 and tdee_dia_val is not None:
+                    total_actual = sum(
+                        best_plan[s]["opcion_a"]["kcal_total"] for s in main_slots_presentes
+                    ) + reservado_kcal
+                    if total_actual >= tdee_dia_val:
                         piso_no_cumplido_por_tdee = True
-                    opcion_a_extra = best_plan[slot_mas_grande]["opcion_a"]
-                    opcion_a_extra["componentes"].append(extra_scaled)
-                    opcion_a_extra["kcal_total"] = round(sum(x["kcal"] for x in opcion_a_extra["componentes"]), 1)
-                    opcion_a_extra["proteina_g_total"] = round(
-                        sum(x.get("proteina_g", 0) for x in opcion_a_extra["componentes"]), 1
-                    )
 
         if piso_no_cumplido_por_tdee and best_plan:
             best_plan["_aviso_piso_no_cumplido"] = True
@@ -819,11 +888,14 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
                 opcion_a_recorte = best_plan[slot_a_recortar]["opcion_a"]
                 for c in opcion_a_recorte["componentes"]:
                     if c.get("proteina_g", 0) > 0 and c["unidad"] != "porcion":
+                        item_db = get(db, c["nombre"])
+                        if not item_db:
+                            continue
                         factor_recorte = max(1 - (exceso_por_slot / max(c["proteina_g"], 1)), 0.4)
-                        nuevo = dict(c)
-                        for macro in ("cantidad", "kcal", "proteina_g", "carbohidratos_g", "grasa_g"):
-                            if macro in nuevo:
-                                nuevo[macro] = round(nuevo[macro] * factor_recorte, 1)
+                        # scale_food redondea a cantidades realistas (unidades
+                        # enteras, gramos en múltiplos de 25) en vez de dejar
+                        # algo como "2.3 huevo".
+                        nuevo = scale_food(item_db, c["cantidad"] * factor_recorte)
                         opcion_a_recorte["componentes"][opcion_a_recorte["componentes"].index(c)] = nuevo
                         opcion_a_recorte["kcal_total"] = round(
                             sum(x["kcal"] for x in opcion_a_recorte["componentes"]), 1
