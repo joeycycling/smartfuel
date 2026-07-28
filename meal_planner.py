@@ -824,11 +824,13 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
 
         # Si el tope de 320g impide llegar al piso repartiendo, como último
         # recurso se agrega un componente de proteína extra a la comida más
-        # grande — pero SIN sumar kcal nuevas al día: se recorta el carbo de
-        # esa misma comida por el mismo tanto (se "cambia" carbo por
-        # proteína), así la comida no queda desbalanceada ni el total del
-        # día se desvía del objetivo. Si el carbo ya está en su mínimo y no
-        # alcanza a absorber todo, el remanente sí se avisa contra el TDEE.
+        # grande. Primero se intenta SIN sumar kcal nuevas al día: se recorta
+        # el carbo de esa misma comida por el mismo tanto (se "cambia" carbo
+        # por proteína). Pero el TDEE del día sigue siendo un techo físico
+        # que nunca se cruza — si el carbo ya está en su mínimo y no alcanza
+        # a absorber todo, se recorta la proteína extra que sobra (en vez de
+        # dejarla pasar) para GARANTIZAR que nunca se convierta un déficit en
+        # superávit por esto; si aun así queda corto el piso, se avisa.
         total_proteina_dia = sum(best_plan[s]["opcion_a"].get("proteina_g_total", 0) for s in main_slots_presentes)
         if total_proteina_dia < protein_floor_g_val and main_slots_presentes and not piso_no_cumplido_por_tdee:
             faltante_final = protein_floor_g_val - total_proteina_dia
@@ -850,22 +852,31 @@ def build_daily_meal_plan(target_kcal, protein_floor_g_val, db, prefs,
                 recortado = _offset_kcal_from_carb(
                     opcion_a_extra["componentes"], db, extra_scaled["kcal"], excluir_nombre=extra_scaled["nombre"]
                 )
+
+                # Cuánto de la proteína extra quedó SIN compensar con carbo.
+                residual_kcal = extra_scaled["kcal"] - recortado
+                if residual_kcal > 0 and tdee_dia_val is not None:
+                    total_actual_sin_extra = sum(
+                        best_plan[s]["opcion_a"]["kcal_total"] for s in main_slots_presentes
+                        if s != slot_mas_grande
+                    ) + (opcion_a_extra["kcal_total"] - extra_scaled["kcal"] + recortado) + reservado_kcal
+                    margen_kcal_disponible = tdee_dia_val - total_actual_sin_extra
+
+                    if residual_kcal > margen_kcal_disponible:
+                        # No hay margen para todo el residual — recorta la
+                        # proteína extra misma hasta que quepa exactamente en
+                        # el margen que queda (nunca por debajo de 0).
+                        margen_kcal_disponible = max(margen_kcal_disponible, 0)
+                        factor_recorte = margen_kcal_disponible / residual_kcal if residual_kcal else 0
+                        nueva_cantidad_extra = extra_scaled["cantidad"] * factor_recorte
+                        idx_extra = opcion_a_extra["componentes"].index(extra_scaled)
+                        opcion_a_extra["componentes"][idx_extra] = scale_food(extra_proteina, nueva_cantidad_extra)
+                        piso_no_cumplido_por_tdee = True
+
                 opcion_a_extra["kcal_total"] = round(sum(x["kcal"] for x in opcion_a_extra["componentes"]), 1)
                 opcion_a_extra["proteina_g_total"] = round(
                     sum(x.get("proteina_g", 0) for x in opcion_a_extra["componentes"]), 1
                 )
-
-                # Si el carbo no tenía margen para absorber todo, lo que
-                # sobró sí sube el total del día — solo ahí se compara
-                # contra el TDEE para avisar (no para bloquear, ya se
-                # agregó lo mínimo posible sin alternativa mejor).
-                residual_kcal = extra_scaled["kcal"] - recortado
-                if residual_kcal > 0 and tdee_dia_val is not None:
-                    total_actual = sum(
-                        best_plan[s]["opcion_a"]["kcal_total"] for s in main_slots_presentes
-                    ) + reservado_kcal
-                    if total_actual >= tdee_dia_val:
-                        piso_no_cumplido_por_tdee = True
 
         if piso_no_cumplido_por_tdee and best_plan:
             best_plan["_aviso_piso_no_cumplido"] = True
