@@ -77,6 +77,84 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
         raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
 
 
+def send_run_summary_email(resultados, send_email=True, ids_filtro=None, admin_email=None):
+    """
+    Le manda a ti mismo (el coach) un resumen corto de cómo salió la
+    corrida semanal — quién recibió su plan, a quién se le omitió y por
+    qué, y si algo falló — para saber que corrió bien sin tener que
+    entrar al log de Railway cada vez.
+
+    resultados: lista de dicts {"nombre", "status", "detalle"} que arma
+    process_athlete() por cada atleta (status: "enviado"/"prueba"/
+    "omitido"/"error").
+    admin_email: si no se pasa, usa la variable de entorno ADMIN_EMAIL;
+    si tampoco está configurada, no envía nada (para no romper corridas
+    de gente que use este código sin configurar ese correo).
+    """
+    api_key = os.environ.get("RESEND_API_KEY")
+    admin_email = admin_email or os.environ.get("ADMIN_EMAIL")
+    if not api_key or not admin_email:
+        return
+    from_address = os.environ.get("EMAIL_FROM", "onboarding@resend.dev")
+
+    enviados = [r for r in resultados if r["status"] == "enviado"]
+    prueba = [r for r in resultados if r["status"] == "prueba"]
+    omitidos = [r for r in resultados if r["status"] == "omitido"]
+    errores = [r for r in resultados if r["status"] == "error"]
+
+    lineas = []
+    if ids_filtro:
+        lineas.append(f"(Corrida filtrada a {len(ids_filtro)} atleta(s) específico(s))")
+    if not send_email:
+        lineas.append("*** MODO PRUEBA — no se envió ningún correo real a atletas ***")
+    lineas.append("")
+
+    lineas.append(f"✅ Enviados ({len(enviados)}):")
+    lineas += [f"   - {r['nombre']} → {r['detalle']}" for r in enviados] or ["   (ninguno)"]
+
+    if prueba:
+        lineas.append(f"\n🧪 Generados en modo prueba, sin enviar ({len(prueba)}):")
+        lineas += [f"   - {r['nombre']}" for r in prueba]
+
+    if omitidos:
+        lineas.append(f"\n⏭️  Omitidos ({len(omitidos)}):")
+        lineas += [f"   - {r['nombre']}: {r['detalle']}" for r in omitidos]
+
+    if errores:
+        lineas.append(f"\n❌ Con error ({len(errores)}):")
+        lineas += [f"   - {r['nombre']}: {r['detalle']}" for r in errores]
+
+    body_text = "\n".join(lineas)
+    estado_general = "con errores" if errores else "OK"
+    subject = f"SmartFuel — resumen de la corrida ({estado_general}, {len(enviados)} enviados)"
+
+    payload = {
+        "from": from_address,
+        "to": [admin_email],
+        "subject": subject,
+        "text": body_text,
+    }
+
+    req = urllib.request.Request(
+        RESEND_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartFuelBot/1.0 (+https://joeycycling.com)",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status not in (200, 201):
+                raise Exception(f"Resend devolvió status {response.status}")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="ignore")
+        raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
+
+
 def send_weight_reminder_email(athlete_name, athlete_email):
     """
     Recordatorio simple (sin PDF adjunto) para que el atleta actualice su

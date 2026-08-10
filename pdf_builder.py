@@ -185,6 +185,93 @@ def _build_cover_page(athlete_name, athlete_info, st):
     return story
 
 
+INSTRUCTIONS_SECTIONS = [
+    ("1. USO DE LA BALANZA", [
+        "Pesa la comida ya <b>preparada</b> (cocida/horneada/a la plancha), tal como dice el plan — "
+        "el peso cambia bastante entre crudo y cocido, así que si pesas en crudo vas a comer menos "
+        "de lo que el plan calculó.",
+        "Usa la balanza en <b>gramos</b>, no en onzas ni \"a ojo\" — la precisión es lo que hace que "
+        "el plan funcione.",
+        "Tara la balanza (ponla en 0) con el plato o envase vacío antes de agregar la comida, así "
+        "no estás pesando el peso del plato también.",
+        "Si comes fuera de casa y no tienes balanza a mano, usa referencias visuales: una porción de "
+        "proteína del tamaño de la palma de tu mano ≈ 120-150g; un puño cerrado de carbohidrato "
+        "cocido ≈ 150-200g. No es tan exacto como la balanza, pero es mejor que adivinar.",
+    ]),
+    ("2. CÓMO COCINAR SIN AGREGAR KCAL QUE NO ESTÁN MEDIDAS", [
+        "Usa sartén <b>antiadherente</b> o spray de aceite (1-2 segundos de spray ≈ 5-10 kcal) en vez "
+        "de servir aceite \"a chorrito\" — una cucharada de aceite son ~120 kcal que no están en el plan.",
+        "Si vas a usar aceite normal, <b>mídelo</b> con cuchara medidora — no se ve como mucho en la "
+        "sartén, pero suma kcal rápido si se repite en varias comidas al día.",
+        "Evita salsas y aderezos con azúcar o grasa oculta que no estén en el plan (mayonesa, salsas "
+        "BBQ/ranch, aderezos cremosos) — son de las formas más fáciles de romper el déficit sin darte "
+        "cuenta. Si tu comida incluye una salsa, ya está contada en las kcal del plan.",
+        "Para sazonar sin agregar kcal: especias secas, ajo/cebolla en polvo, pimienta, orégano, "
+        "limón, vinagre — dan sabor sin sumar calorías. La sal no tiene kcal, así que no hay problema "
+        "en usarla a tu gusto.",
+        "Si necesitas espesar o dar cuerpo a algo, usa vegetales o caldo en vez de mantequilla o crema.",
+    ]),
+    ("3. HIDRATACIÓN SEGÚN EL DÍA", [
+        "Días de <b>descanso</b> o sin entreno: apunta a ~30-35ml de agua por kg de peso corporal "
+        "repartidos en el día (para un atleta de ~98kg, serían unos 3-3.4 litros).",
+        "Días de <b>entreno</b>: a esa base súmale lo que tomas durante la sesión (ver la tabla de "
+        "Training Fuel — la bebida isotónica/carbohidratos durante la bici ya cuenta como parte de "
+        "tu hidratación de ese bloque, no es adicional).",
+        "En entrenos largos (2+ horas) o con mucho calor/sudoración, agrega electrolitos (sodio) — no "
+        "solo agua, sobre todo en \"fondo\" o \"intervalos\" donde sudas más.",
+        "Buen indicador: si tu orina está clara/amarillo pálido, vas bien hidratado. Si está oscura, "
+        "necesitas tomar más agua a lo largo del día (no toda de golpe).",
+    ]),
+    ("4. CÓMO USAR LAS OPCIONES A / B / PREMIUM", [
+        "Las opciones A, B y Premium de cada comida son <b>equivalentes en kcal y proteína</b> — elige "
+        "la que tengas disponible o te provoque ese día, no necesitas seguir siempre la misma letra.",
+        "Si te falta un ingrediente de la opción que ibas a preparar, puedes sustituirlo por otro de "
+        "la <b>misma categoría</b> (otra proteína magra similar, u otro carbohidrato) en un peso "
+        "parecido en gramos — no cambies proteína por carbohidrato entre sí.",
+        "El horario exacto de cada comida es flexible — lo que importa es llegar a las kcal y "
+        "proteína del día completo, no comer a una hora específica.",
+        "Si un día se te hace imposible seguir el plan al pie de la letra, prioriza llegar a la "
+        "proteína del día antes que las kcal exactas — es lo que más protege tu progreso.",
+    ]),
+]
+
+
+def _build_instructions_page(st):
+    """
+    Página de instrucciones generales de uso del plan — balanza, cómo
+    cocinar sin sumar kcal de más, hidratación según el día, y cómo usar
+    las opciones A/B/Premium. Va justo después de la portada, antes de
+    los días de la semana, para que el atleta la lea antes de empezar.
+    """
+    body_style = ParagraphStyle(
+        "InstrBody", parent=getSampleStyleSheet()["Normal"], fontSize=9, leading=11.5,
+        textColor=BRAND_DARK, spaceAfter=4,
+    )
+    bullet_style = ParagraphStyle(
+        "InstrBullet", parent=body_style, leftIndent=12, bulletIndent=0, spaceAfter=3.5,
+    )
+
+    story = [
+        Paragraph("CÓMO SEGUIR TU PLAN", st["subtitle"]),
+        Paragraph(
+            "Antes de empezar, lee esto — son los detalles que más marcan la diferencia entre que "
+            "el plan funcione o no.",
+            body_style,
+        ),
+        Spacer(1, 6),
+    ]
+
+    for titulo, puntos in INSTRUCTIONS_SECTIONS:
+        story.append(_section_banner(titulo, st))
+        story.append(Spacer(1, 4))
+        for punto in puntos:
+            story.append(Paragraph(f"•&nbsp;&nbsp;{punto}", bullet_style))
+        story.append(Spacer(1, 7))
+
+    story.append(PageBreak())
+    return story
+
+
 def _section_banner(text, st):
     """Barra de sección con el mismo estilo de marca que los headers de día."""
     t = Table([[Paragraph(text, ParagraphStyle(
@@ -430,6 +517,8 @@ def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,
 
     if athlete_info:
         story.extend(_build_cover_page(athlete_name, athlete_info, st))
+
+    story.extend(_build_instructions_page(st))
 
     context_line = f"Semana del {week_label}"
     if phase_info:

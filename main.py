@@ -39,7 +39,7 @@ from meal_planner import build_daily_meal_plan, build_shopping_list
 from food_db import load_food_db, get
 from phase_store import get_phase_state, save_phase_state, append_historial_entry, get_ultimos_alimentos, save_ultimos_alimentos
 from pdf_builder import build_weekly_pdf
-from email_sender import send_weekly_plan_email, send_weight_reminder_email
+from email_sender import send_weekly_plan_email, send_weight_reminder_email, send_run_summary_email
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_pdfs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -65,13 +65,27 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
 
     if not athlete_id:
         print(f"[SKIP] {athlete_name}: sin ID_Atleta (TrainingPeaks) en el sheet, se omite.")
-        return
+        return {"nombre": athlete_name, "status": "omitido", "detalle": "sin ID de TrainingPeaks en el sheet"}
 
     print(f"--- Procesando {athlete_name} (TP ID {athlete_id}) ---")
 
     try:
         # 1. Peso + FTP/perfil + entrenos planificados de TrainingPeaks
         weight_history = get_weight_history(page, athlete_id)
+
+        # Diagnóstico: rango exacto consultado y cuántas entradas trajo —
+        # así si un atleta sale "sin historial de peso" se puede ver de
+        # una vez si el problema es la ventana de fechas, o que TrainingPeaks
+        # de verdad no tiene ninguna entrada de peso ahí (u otro motivo,
+        # como acceso del coach al atleta que aún no propagó en la API).
+        _hoy = datetime.now().date()
+        _desde = _hoy - timedelta(weeks=6)
+        if weight_history:
+            print(f"  [DEBUG peso] {len(weight_history)} entrada(s) entre {_desde} y {_hoy} "
+                  f"(última: {weight_history[-1]['fecha']}, {weight_history[-1]['peso_lb']}lbs)")
+        else:
+            print(f"  [DEBUG peso] 0 entradas encontradas entre {_desde} y {_hoy}")
+
         settings = get_athlete_settings(page, athlete_id)
         ftp = extract_ftp(settings)
         age = extract_age(settings) or 30
@@ -80,7 +94,7 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
 
         if not weight_history:
             print(f"[SKIP] {athlete_name}: sin historial de peso en TrainingPeaks todavía.")
-            return
+            return {"nombre": athlete_name, "status": "omitido", "detalle": "sin historial de peso en TrainingPeaks"}
 
         athlete_weight_lb = weight_history[-1]["peso_lb"]
         athlete_weight_kg = weight_history[-1]["peso_kg"]
@@ -321,21 +335,34 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         # 7. Envío por correo
         if not send_email:
             print(f"  [MODO PRUEBA] PDF generado en {pdf_path} — NO se envió correo.")
+            return {"nombre": athlete_name, "status": "prueba", "detalle": f"PDF generado en {pdf_path}, no se envió (modo prueba)"}
         elif athlete_email:
             send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label)
             print(f"  Enviado a {athlete_email}")
+            return {"nombre": athlete_name, "status": "enviado", "detalle": athlete_email}
         else:
             print(f"  [AVISO] {athlete_name} no tiene email en el sheet, no se envió.")
+            return {"nombre": athlete_name, "status": "omitido", "detalle": "sin email en el sheet"}
 
-    except Exception:
+    except Exception as e:
         print(f"[ERROR] Falló el procesamiento de {athlete_name}:")
         traceback.print_exc()
+        return {"nombre": athlete_name, "status": "error", "detalle": str(e) or type(e).__name__}
 
 
 def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
-    print(f"\n=== SmartFuel — corrida semanal {datetime.now()} ===")
+    """
+    athlete_id_filter: None (todos), un ID (string/int), o una lista/tupla de
+    IDs — para correr solo un subconjunto de atletas de prueba.
+    """
+    ids_filtro = None
     if athlete_id_filter:
-        print(f"    (modo prueba: solo atleta con ID {athlete_id_filter})")
+        ids_filtro = {str(x) for x in athlete_id_filter} if isinstance(athlete_id_filter, (list, tuple, set)) \
+            else {str(athlete_id_filter)}
+
+    print(f"\n=== SmartFuel — corrida semanal {datetime.now()} ===")
+    if ids_filtro:
+        print(f"    (modo prueba: solo atleta(s) con ID {', '.join(sorted(ids_filtro))})")
     if not send_email:
         print("    (modo prueba: NO se enviarán correos)")
     if start_date:
@@ -356,17 +383,31 @@ def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
             print("[AVISO] No se pudo leer el form de feedback semanal, se continúa sin él.")
             traceback.print_exc()
 
+    resultados = []
     with sync_playwright() as p:
         page, browser = login_and_get_page(p)
         try:
             for athlete_prefs in all_prefs:
-                if athlete_id_filter and str(athlete_prefs.get("id_atleta")) != str(athlete_id_filter):
+                if ids_filtro and str(athlete_prefs.get("id_atleta")) not in ids_filtro:
                     continue
-                process_athlete(page, athlete_prefs, db, send_email=send_email, feedback_por_email=feedback_por_email, start_date=start_date)
+                resultado = process_athlete(
+                    page, athlete_prefs, db, send_email=send_email,
+                    feedback_por_email=feedback_por_email, start_date=start_date,
+                )
+                if resultado:
+                    resultados.append(resultado)
         finally:
             browser.close()
 
     print("=== Corrida semanal terminada ===\n")
+
+    # 8. Resumen de la corrida a ti mismo — así sabes que corrió (y cómo)
+    # sin tener que entrar al log de Railway cada vez.
+    try:
+        send_run_summary_email(resultados, send_email=send_email, ids_filtro=ids_filtro)
+    except Exception:
+        print("[AVISO] No se pudo enviar el correo de resumen de la corrida.")
+        traceback.print_exc()
 
 
 def run_weight_reminder_job(athlete_id_filter=None):
@@ -375,9 +416,14 @@ def run_weight_reminder_job(athlete_id_filter=None):
     que actualice su peso en TrainingPeaks antes del fin de semana — así
     el plan del sábado usa un dato fresco, no uno de hace 2 semanas.
     """
-    print(f"\n=== SmartFuel — recordatorio de peso {datetime.now()} ===")
+    ids_filtro = None
     if athlete_id_filter:
-        print(f"    (modo prueba: solo atleta con ID {athlete_id_filter})")
+        ids_filtro = {str(x) for x in athlete_id_filter} if isinstance(athlete_id_filter, (list, tuple, set)) \
+            else {str(athlete_id_filter)}
+
+    print(f"\n=== SmartFuel — recordatorio de peso {datetime.now()} ===")
+    if ids_filtro:
+        print(f"    (modo prueba: solo atleta(s) con ID {', '.join(sorted(ids_filtro))})")
 
     csv_url = os.environ["PREFS_CSV_URL"]
     all_prefs = fetch_preferences_csv(csv_url)
@@ -389,7 +435,7 @@ def run_weight_reminder_job(athlete_id_filter=None):
 
         if not athlete_id:
             continue
-        if athlete_id_filter and str(athlete_id) != str(athlete_id_filter):
+        if ids_filtro and str(athlete_id) not in ids_filtro:
             continue
         if not athlete_email:
             print(f"  [AVISO] {athlete_name} no tiene email en el sheet, se omite.")
@@ -433,13 +479,15 @@ def _resolve_start_date():
 
 if __name__ == "__main__":
     if "--run-now" in sys.argv:
-        athlete_id_filter = _get_arg_value("--athlete-id=")
+        athlete_id_raw = _get_arg_value("--athlete-id=")
+        athlete_id_filter = [x.strip() for x in athlete_id_raw.split(",") if x.strip()] if athlete_id_raw else None
         send_email = "--no-email" not in sys.argv
         start_date = _resolve_start_date()
         run_weekly_job(athlete_id_filter=athlete_id_filter, send_email=send_email, start_date=start_date)
         print("Corrida manual terminada.")
     elif "--run-reminder-now" in sys.argv:
-        athlete_id_filter = _get_arg_value("--athlete-id=")
+        athlete_id_raw = _get_arg_value("--athlete-id=")
+        athlete_id_filter = [x.strip() for x in athlete_id_raw.split(",") if x.strip()] if athlete_id_raw else None
         run_weight_reminder_job(athlete_id_filter=athlete_id_filter)
         print("Recordatorio manual terminado.")
     else:
