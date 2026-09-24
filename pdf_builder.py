@@ -7,6 +7,7 @@ Genera el PDF semanal del plan SmartFuel:
   4. Lista de compras de la semana
 """
 import os
+import random
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib import colors
@@ -16,7 +17,10 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.utils import ImageReader
 
-from meal_planner import PRE_WORKOUT_OPTIONS, POST_WORKOUT_OPTIONS, BIKE_CHO_PER_HOUR, CATEGORIAS_ORDEN
+from meal_planner import (
+    PRE_WORKOUT_OPTIONS, POST_WORKOUT_OPTIONS, BIKE_CHO_PER_HOUR, CATEGORIAS_ORDEN,
+    bike_intra_workout_recommendation, pick_proplus_fuel_options,
+)
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
 LOGO_ORANGE = os.path.join(ASSETS_DIR, "logo_orange_transparent.png")
@@ -287,12 +291,19 @@ def _section_banner(text, st):
     return t
 
 
-def _build_training_fuel_page(daily_plans, daily_burn, st):
+def _build_training_fuel_page(daily_plans, daily_burn, st, pre_options=None, post_options=None):
     """
     Hoja de referencia de Training Fuel (pre/intra/post-entreno), con las
     opciones fijas + la recomendación específica de esta semana para cada
     día de bici (grs/hora reales según su entreno planificado).
+
+    pre_options/post_options: por defecto usa las listas fijas de siempre
+    (plan completo). PRO+ pasa una muestra al azar de un pool más grande
+    para que no se vea el mismo template todas las semanas.
     """
+    pre_options = pre_options if pre_options is not None else PRE_WORKOUT_OPTIONS
+    post_options = post_options if post_options is not None else POST_WORKOUT_OPTIONS
+
     story = [
         _logo_image(),
         Paragraph("TRAINING FUEL — Referencia de nutrición para tus entrenos", st["subtitle"]),
@@ -304,7 +315,7 @@ def _build_training_fuel_page(daily_plans, daily_burn, st):
     story.append(Paragraph("Carbohidratos fáciles de digerir + algo de proteína. Elige una opción:", st["small_note"]))
     story.append(Spacer(1, 4))
     rows = [["Opción", "PRO", "CHO", "GRASA", "KCAL"]]
-    for opt in PRE_WORKOUT_OPTIONS:
+    for opt in pre_options:
         rows.append([Paragraph(opt["nombre"], st["small_note"]), f"{opt['proteina_g']}g", f"{opt['carbohidratos_g']}g",
                      f"{opt['grasa_g']}g", f"{opt['kcal']}kcal"])
     t = Table(rows, colWidths=[3.9 * inch, 0.6 * inch, 0.6 * inch, 0.7 * inch, 0.9 * inch])
@@ -381,7 +392,7 @@ def _build_training_fuel_page(daily_plans, daily_burn, st):
     story.append(Paragraph("Snack simple de recuperación, no una comida completa. Elige una opción:", st["small_note"]))
     story.append(Spacer(1, 4))
     rows = [["Opción", "PRO", "CHO", "GRASA", "KCAL"]]
-    for opt in POST_WORKOUT_OPTIONS:
+    for opt in post_options:
         rows.append([Paragraph(opt["nombre"], st["small_note"]), f"{opt['proteina_g']}g", f"{opt['carbohidratos_g']}g",
                      f"{opt['grasa_g']}g", f"{opt['kcal']}kcal"])
     t = Table(rows, colWidths=[3.9 * inch, 0.6 * inch, 0.6 * inch, 0.7 * inch, 0.9 * inch])
@@ -487,6 +498,75 @@ def _build_shopping_list_page(shopping_list, st):
         story.append(Spacer(1, 12))
 
     return story
+
+
+def build_proplus_pdf(output_path, athlete_name, week_label, sessions_by_day=None):
+    """
+    PDF corto para el plan PRO+ — solo la recomendación de nutrición para
+    los entrenos de la semana (Training Fuel personalizado), sin plan de
+    comidas completo. Las opciones de pre/post-entreno que se muestran
+    varían cada corrida (ver pick_proplus_fuel_options), para que no se
+    vea el mismo template exacto todas las semanas.
+
+    sessions_by_day: {dia: [sesiones]} — igual formato que usa el plan
+    completo (viene de trainingpeaks_client / workout_kcal).
+    """
+    sessions_by_day = sessions_by_day or {}
+    doc = SimpleDocTemplate(
+        output_path, pagesize=letter,
+        topMargin=0.6 * inch, bottomMargin=0.6 * inch,
+        leftMargin=0.6 * inch, rightMargin=0.6 * inch,
+    )
+    st = _styles()
+
+    # daily_plans "liviano" — solo el intra-entreno personalizado de cada
+    # día con sesión de bici, para reutilizar _build_training_fuel_page
+    # tal cual, sin tener que duplicar sus ~100 líneas de tablas.
+    daily_plans_liviano = {}
+    for dia, sesiones in sessions_by_day.items():
+        bike_sessions = [s for s in sesiones if s.get("sport") == "bike"]
+        if bike_sessions:
+            daily_plans_liviano[dia] = {"intra_entreno": bike_intra_workout_recommendation(bike_sessions)}
+
+    pre_options, post_options = pick_proplus_fuel_options()
+
+    story = [
+        _logo_image(),
+        Paragraph("PRO+ — Nutrición para tus entrenos de la semana", st["subtitle"]),
+    ]
+
+    dias_con_entreno = [d for d in DIAS_ES if sessions_by_day.get(d)]
+    if dias_con_entreno:
+        resumen_semana = "; ".join(
+            f"{DIAS_DISPLAY.get(d, d.upper())}: {_sesiones_resumen(sessions_by_day[d])}"
+            for d in dias_con_entreno
+        )
+        story.append(Paragraph(
+            f"Hola {athlete_name} — esto es lo que planificaste para la semana del {week_label}: "
+            f"{resumen_semana}.",
+            st["small_note"],
+        ))
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("TRAINING FUEL — Referencia de nutrición para tus entrenos", st["section_header"]))
+    story.append(Spacer(1, 2))
+
+    # _build_training_fuel_page trae su propio logo+título al inicio
+    # (los 3 primeros elementos: logo, título, spacer) — se saltan aquí
+    # para no duplicar el logo, ya que este PDF ya puso el suyo arriba.
+    training_fuel_story = _build_training_fuel_page(
+        daily_plans_liviano, daily_burn=None, st=st,
+        pre_options=pre_options, post_options=post_options,
+    )
+    story.extend(training_fuel_story[3:])
+
+    story.append(Spacer(1, 14))
+    tip_style = ParagraphStyle(
+        "ProplusTip", parent=getSampleStyleSheet()["Normal"], fontSize=9,
+        textColor=colors.HexColor("#666666"), leading=12,
+    )
+    story.append(Paragraph(f"<b>Tip:</b> {random.choice(DAILY_TIPS)}", tip_style))
+
+    doc.build(story, onFirstPage=_add_page_number, onLaterPages=_add_page_number)
 
 
 def build_weekly_pdf(output_path, athlete_name, week_label, daily_targets,

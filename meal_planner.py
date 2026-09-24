@@ -548,6 +548,77 @@ POST_WORKOUT_OPTIONS = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Pools ampliados de opciones pre/post-entreno — SOLO para el correo semanal
+# de PRO+ (Training Fuel personalizado, sin plan de comidas completo). Cada
+# semana se toma una muestra al azar de aquí (ver pdf_builder.build_proplus_pdf)
+# para que no se vea el mismo template exacto todas las semanas. El plan
+# completo NO usa estas listas — sigue mostrando sus opciones fijas de
+# siempre (PRE_WORKOUT_OPTIONS / POST_WORKOUT_OPTIONS de arriba).
+# ---------------------------------------------------------------------------
+PROPLUS_PRE_WORKOUT_POOL = PRE_WORKOUT_OPTIONS + [
+    {
+        "nombre": "1 Guineo mediano + 15g Miel",
+        "kcal": 155, "proteina_g": 2, "carbohidratos_g": 37, "grasa_g": 0,
+    },
+    {
+        "nombre": "40g Avena cruda cocida con agua + 10g Miel",
+        "kcal": 168, "proteina_g": 5, "carbohidratos_g": 34, "grasa_g": 2,
+    },
+    {
+        "nombre": "2 Tostadas de pan blanco + 20g Mermelada",
+        "kcal": 176, "proteina_g": 4, "carbohidratos_g": 37, "grasa_g": 1,
+    },
+    {
+        "nombre": "1 Barra de dátiles/energética simple",
+        "kcal": 160, "proteina_g": 2, "carbohidratos_g": 35, "grasa_g": 2,
+    },
+    {
+        "nombre": "150ml Jugo de naranja natural + 1 Tostada",
+        "kcal": 172, "proteina_g": 3, "carbohidratos_g": 38, "grasa_g": 1,
+    },
+    {
+        "nombre": "1 Waffle pequeño + 15g Miel",
+        "kcal": 178, "proteina_g": 4, "carbohidratos_g": 36, "grasa_g": 2,
+    },
+    {
+        "nombre": "35g Granola baja en grasa + 100ml Leche de Almendra",
+        "kcal": 166, "proteina_g": 4, "carbohidratos_g": 35, "grasa_g": 2,
+    },
+]
+
+PROPLUS_POST_WORKOUT_POOL = POST_WORKOUT_OPTIONS + [
+    {
+        "nombre": "1 Batido de proteína (agua) + 1 Guineo",
+        "kcal": 230, "proteina_g": 27, "carbohidratos_g": 30, "grasa_g": 1,
+    },
+    {
+        "nombre": "150g Requesón bajo en grasa + 1 Porción de Fruta + 10g Miel",
+        "kcal": 225, "proteina_g": 26, "carbohidratos_g": 28, "grasa_g": 2,
+    },
+    {
+        "nombre": "200ml Leche Descremada con Chocolate + 1 Scoop Proteína",
+        "kcal": 240, "proteina_g": 30, "carbohidratos_g": 28, "grasa_g": 2,
+    },
+    {
+        "nombre": "2 Claras de Huevo Cocidas + 1 Tostada + 1 Fruta",
+        "kcal": 220, "proteina_g": 22, "carbohidratos_g": 30, "grasa_g": 2,
+    },
+]
+
+
+def pick_proplus_fuel_options(n_pre=3, n_post=2):
+    """
+    Toma una muestra al azar de los pools de PRO+ para esta corrida —
+    así cada semana el atleta ve una combinación distinta de opciones,
+    sin que cambie la lógica nutricional detrás (mismas kcal/macros por
+    categoría, solo varía cuáles ejemplos concretos se muestran).
+    """
+    pre = random.sample(PROPLUS_PRE_WORKOUT_POOL, min(n_pre, len(PROPLUS_PRE_WORKOUT_POOL)))
+    post = random.sample(PROPLUS_POST_WORKOUT_POOL, min(n_post, len(PROPLUS_POST_WORKOUT_POOL)))
+    return pre, post
+
+
 def build_post_entreno():
     """Elige una de las opciones fijas y simples de post-entreno (snack de recuperación)."""
     opcion = random.choice(POST_WORKOUT_OPTIONS)

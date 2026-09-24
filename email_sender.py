@@ -77,6 +77,59 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
         raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
 
 
+def send_proplus_email(athlete_name, athlete_email, pdf_path, week_label):
+    """
+    Envía el PDF corto de recomendación de nutrición (PRO+) al atleta —
+    mismo mecanismo que send_weekly_plan_email, pero con su propio
+    asunto/cuerpo (no es el plan de comidas completo, así que el texto
+    no debe sugerir que lo es).
+    """
+    api_key = os.environ["RESEND_API_KEY"]
+    from_address = os.environ.get("EMAIL_FROM", "onboarding@resend.dev")
+
+    body_text = (
+        f"Hola {athlete_name},\n\n"
+        f"Aquí tienes tu recomendación de nutrición para los entrenos de esta semana "
+        f"({week_label}) — pre, durante y después de cada sesión.\n\n"
+        f"Cualquier duda, escríbeme.\n\n"
+        f"Joey Martí\n"
+        f"Cycling Coach — CircuitCycling"
+    )
+
+    with open(pdf_path, "rb") as f:
+        pdf_base64 = base64.b64encode(f.read()).decode("utf-8")
+
+    payload = {
+        "from": from_address,
+        "to": [athlete_email],
+        "subject": f"Tu nutrición para entrenar esta semana — {week_label}",
+        "text": body_text,
+        "attachments": [{
+            "filename": os.path.basename(pdf_path),
+            "content": pdf_base64,
+        }],
+    }
+
+    req = urllib.request.Request(
+        RESEND_API_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "SmartFuelBot/1.0 (+https://joeycycling.com)",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            if response.status not in (200, 201):
+                raise Exception(f"Resend devolvió status {response.status}")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="ignore")
+        raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
+
+
 def send_run_summary_email(resultados, send_email=True, ids_filtro=None, admin_email=None):
     """
     Le manda a ti mismo (el coach) un resumen corto de cómo salió la

@@ -12,6 +12,10 @@ Variables de entorno esperadas (configurar en Railway):
     RESEND_API_KEY     - API key de tu cuenta de Resend (para el correo)
     EMAIL_FROM         - remitente verificado en Resend (ej. info@joeycycling.com)
     PREFS_CSV_URL      - link del CSV publicado del Google Form/Sheet
+    PROPLUS_CSV_URL    - (opcional) link del CSV publicado del sheet de
+                         atletas PRO+ (nombre, email, ID de TrainingPeaks).
+                         Si no se configura, simplemente no se les envía
+                         nada — no afecta al plan completo.
 """
 import os
 import sys
@@ -29,6 +33,7 @@ from trainingpeaks_client import (
 )
 from prefs_loader import fetch_preferences_csv
 from feedback_loader import fetch_feedback_csv
+from proplus_loader import fetch_proplus_csv
 from phase_engine import (
     update_phase, protein_floor_g, protein_ceiling_g, protein_floor_g_por_tipo_dia,
     get_initial_deficit_pct, objetivo_label,
@@ -38,8 +43,8 @@ from workout_kcal import estimate_week_kcal
 from meal_planner import build_daily_meal_plan, build_shopping_list
 from food_db import load_food_db, get
 from phase_store import get_phase_state, save_phase_state, append_historial_entry, get_ultimos_alimentos, save_ultimos_alimentos
-from pdf_builder import build_weekly_pdf
-from email_sender import send_weekly_plan_email, send_weight_reminder_email, send_run_summary_email
+from pdf_builder import build_weekly_pdf, build_proplus_pdf
+from email_sender import send_weekly_plan_email, send_weight_reminder_email, send_run_summary_email, send_proplus_email
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "generated_pdfs")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -350,6 +355,54 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         return {"nombre": athlete_name, "status": "error", "detalle": str(e) or type(e).__name__}
 
 
+def process_proplus_athlete(page, proplus_prefs, send_email=True, start_date=None):
+    """
+    Versión liviana de process_athlete() para el plan PRO+: NO arma plan de
+    comidas completo, solo lee los entrenos planificados de la semana en
+    TrainingPeaks y genera/envía el PDF corto de "Training Fuel" (nutrición
+    para entrenar), con opciones de comida que varían cada semana.
+
+    IMPORTANTE: esto es un grupo totalmente aparte del plan completo — no
+    toca ni afecta en nada el flujo de process_athlete() ni a los atletas
+    del plan full.
+    """
+    athlete_id = proplus_prefs.get("id_atleta")
+    athlete_name = proplus_prefs.get("nombre") or "Atleta"
+    athlete_email = proplus_prefs.get("email")
+
+    if not athlete_id:
+        print(f"[SKIP][PRO+] {athlete_name}: sin ID de TrainingPeaks en el sheet, se omite.")
+        return {"nombre": f"[PRO+] {athlete_name}", "status": "omitido", "detalle": "sin ID de TrainingPeaks en el sheet"}
+
+    print(f"--- Procesando PRO+ {athlete_name} (TP ID {athlete_id}) ---")
+
+    try:
+        planned_workouts = get_planned_workouts_week(page, athlete_id, start_date=start_date)
+        sessions_by_day = {d["dia"]: d["sesiones"] for d in planned_workouts}
+
+        week_label = datetime.now().strftime("%d de %B, %Y")
+        pdf_filename = f"{athlete_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}_proplus.pdf"
+        pdf_path = os.path.join(OUTPUT_DIR, pdf_filename)
+
+        build_proplus_pdf(pdf_path, athlete_name, week_label, sessions_by_day=sessions_by_day)
+
+        if not send_email:
+            print(f"  [MODO PRUEBA][PRO+] PDF generado en {pdf_path} — NO se envió correo.")
+            return {"nombre": f"[PRO+] {athlete_name}", "status": "prueba", "detalle": f"PDF generado en {pdf_path}, no se envió (modo prueba)"}
+        elif athlete_email:
+            send_proplus_email(athlete_name, athlete_email, pdf_path, week_label)
+            print(f"  [PRO+] Enviado a {athlete_email}")
+            return {"nombre": f"[PRO+] {athlete_name}", "status": "enviado", "detalle": athlete_email}
+        else:
+            print(f"  [AVISO][PRO+] {athlete_name} no tiene email en el sheet, no se envió.")
+            return {"nombre": f"[PRO+] {athlete_name}", "status": "omitido", "detalle": "sin email en el sheet"}
+
+    except Exception as e:
+        print(f"[ERROR][PRO+] Falló el procesamiento de {athlete_name}:")
+        traceback.print_exc()
+        return {"nombre": f"[PRO+] {athlete_name}", "status": "error", "detalle": str(e) or type(e).__name__}
+
+
 def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
     """
     athlete_id_filter: None (todos), un ID (string/int), o una lista/tupla de
@@ -383,6 +436,18 @@ def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
             print("[AVISO] No se pudo leer el form de feedback semanal, se continúa sin él.")
             traceback.print_exc()
 
+    # Atletas PRO+ (opcional) — grupo aparte que solo recibe el PDF corto de
+    # nutrición para entrenar, no el plan de comidas completo. Si no está
+    # configurado el sheet, el bot sigue funcionando igual para el plan full.
+    proplus_atletas = []
+    proplus_csv_url = os.environ.get("PROPLUS_CSV_URL")
+    if proplus_csv_url:
+        try:
+            proplus_atletas = fetch_proplus_csv(proplus_csv_url)
+        except Exception:
+            print("[AVISO] No se pudo leer el sheet de PRO+, se continúa sin él.")
+            traceback.print_exc()
+
     resultados = []
     with sync_playwright() as p:
         page, browser = login_and_get_page(p)
@@ -393,6 +458,15 @@ def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
                 resultado = process_athlete(
                     page, athlete_prefs, db, send_email=send_email,
                     feedback_por_email=feedback_por_email, start_date=start_date,
+                )
+                if resultado:
+                    resultados.append(resultado)
+
+            for proplus_prefs in proplus_atletas:
+                if ids_filtro and str(proplus_prefs.get("id_atleta")) not in ids_filtro:
+                    continue
+                resultado = process_proplus_athlete(
+                    page, proplus_prefs, send_email=send_email, start_date=start_date,
                 )
                 if resultado:
                     resultados.append(resultado)
