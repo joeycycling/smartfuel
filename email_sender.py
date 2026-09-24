@@ -77,18 +77,32 @@ def send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label):
         raise Exception(f"Resend HTTP {e.code}: {error_body}") from None
 
 
-def send_proplus_email(athlete_name, athlete_email, pdf_path, week_label):
+def send_proplus_email(athlete_name, athlete_email, pdf_path, week_label, es_primera_vez=False):
     """
     Envía el PDF corto de recomendación de nutrición (PRO+) al atleta —
     mismo mecanismo que send_weekly_plan_email, pero con su propio
     asunto/cuerpo (no es el plan de comidas completo, así que el texto
     no debe sugerir que lo es).
+
+    es_primera_vez: True solo en la primera corrida de este atleta en el
+    plan PRO+ — agrega un párrafo de introducción explicando que esto le
+    va a llegar cada semana. Las corridas siguientes (por ejemplo el
+    sábado normal) deben mandarse con False para no repetir esa intro
+    cada vez.
     """
     api_key = os.environ["RESEND_API_KEY"]
     from_address = os.environ.get("EMAIL_FROM", "onboarding@resend.dev")
 
+    intro = (
+        "A partir de ahora vas a recibir este correo cada semana, con la "
+        "recomendación de nutrición ajustada a los entrenos que tengas "
+        "planificados esa semana.\n\n"
+        if es_primera_vez else ""
+    )
+
     body_text = (
         f"Hola {athlete_name},\n\n"
+        f"{intro}"
         f"Aquí tienes tu recomendación de nutrición para los entrenos de esta semana "
         f"({week_label}) — pre, durante y después de cada sesión.\n\n"
         f"Cualquier duda, escríbeme.\n\n"

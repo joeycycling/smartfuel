@@ -355,12 +355,16 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         return {"nombre": athlete_name, "status": "error", "detalle": str(e) or type(e).__name__}
 
 
-def process_proplus_athlete(page, proplus_prefs, send_email=True, start_date=None):
+def process_proplus_athlete(page, proplus_prefs, send_email=True, start_date=None, proplus_primera_vez=False):
     """
     Versión liviana de process_athlete() para el plan PRO+: NO arma plan de
     comidas completo, solo lee los entrenos planificados de la semana en
     TrainingPeaks y genera/envía el PDF corto de "Training Fuel" (nutrición
     para entrenar), con opciones de comida que varían cada semana.
+
+    proplus_primera_vez: True solo para la primera corrida de este grupo —
+    agrega un párrafo de introducción en el correo explicando que van a
+    recibir esto cada semana de ahora en adelante.
 
     IMPORTANTE: esto es un grupo totalmente aparte del plan completo — no
     toca ni afecta en nada el flujo de process_athlete() ni a los atletas
@@ -390,7 +394,7 @@ def process_proplus_athlete(page, proplus_prefs, send_email=True, start_date=Non
             print(f"  [MODO PRUEBA][PRO+] PDF generado en {pdf_path} — NO se envió correo.")
             return {"nombre": f"[PRO+] {athlete_name}", "status": "prueba", "detalle": f"PDF generado en {pdf_path}, no se envió (modo prueba)"}
         elif athlete_email:
-            send_proplus_email(athlete_name, athlete_email, pdf_path, week_label)
+            send_proplus_email(athlete_name, athlete_email, pdf_path, week_label, es_primera_vez=proplus_primera_vez)
             print(f"  [PRO+] Enviado a {athlete_email}")
             return {"nombre": f"[PRO+] {athlete_name}", "status": "enviado", "detalle": athlete_email}
         else:
@@ -403,10 +407,12 @@ def process_proplus_athlete(page, proplus_prefs, send_email=True, start_date=Non
         return {"nombre": f"[PRO+] {athlete_name}", "status": "error", "detalle": str(e) or type(e).__name__}
 
 
-def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
+def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None, proplus_primera_vez=False):
     """
     athlete_id_filter: None (todos), un ID (string/int), o una lista/tupla de
     IDs — para correr solo un subconjunto de atletas de prueba.
+    proplus_primera_vez: True solo para la primera corrida del grupo PRO+ —
+    agrega el párrafo de introducción en su correo (ver send_proplus_email).
     """
     ids_filtro = None
     if athlete_id_filter:
@@ -467,6 +473,7 @@ def run_weekly_job(athlete_id_filter=None, send_email=True, start_date=None):
                     continue
                 resultado = process_proplus_athlete(
                     page, proplus_prefs, send_email=send_email, start_date=start_date,
+                    proplus_primera_vez=proplus_primera_vez,
                 )
                 if resultado:
                     resultados.append(resultado)
@@ -557,7 +564,11 @@ if __name__ == "__main__":
         athlete_id_filter = [x.strip() for x in athlete_id_raw.split(",") if x.strip()] if athlete_id_raw else None
         send_email = "--no-email" not in sys.argv
         start_date = _resolve_start_date()
-        run_weekly_job(athlete_id_filter=athlete_id_filter, send_email=send_email, start_date=start_date)
+        proplus_primera_vez = "--proplus-primera-vez" in sys.argv
+        run_weekly_job(
+            athlete_id_filter=athlete_id_filter, send_email=send_email, start_date=start_date,
+            proplus_primera_vez=proplus_primera_vez,
+        )
         print("Corrida manual terminada.")
     elif "--run-reminder-now" in sys.argv:
         athlete_id_raw = _get_arg_value("--athlete-id=")
