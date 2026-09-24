@@ -16,14 +16,17 @@ import urllib.request
 
 def normalize_header(header):
     """Detecta la columna por palabra clave, igual que prefs_loader.py,
-    para no depender del texto exacto del encabezado en el sheet."""
+    para no depender del texto exacto del encabezado en el sheet.
+    Nombre/email se revisan primero para que "id" (columna del ID de
+    TrainingPeaks, sin importar si el encabezado dice "ID", "ID Atleta"
+    o "ID de TrainingPeaks") no se confunda con otra columna."""
     h = header.lower()
-    if "trainingpeaks" in h and "id" in h:
-        return "id_atleta"
     if "nombre" in h:
         return "nombre"
     if "email" in h or "correo" in h:
         return "email"
+    if "id" in h:
+        return "id_atleta"
     return header
 
 
