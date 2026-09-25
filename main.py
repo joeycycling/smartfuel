@@ -97,12 +97,44 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         gender = extract_gender(settings) or "m"
         planned_workouts = get_planned_workouts_week(page, athlete_id, start_date=start_date)
 
-        if not weight_history:
-            print(f"[SKIP] {athlete_name}: sin historial de peso en TrainingPeaks todavía.")
-            return {"nombre": athlete_name, "status": "omitido", "detalle": "sin historial de peso en TrainingPeaks"}
+        objetivo = athlete_prefs.get("objetivo")
 
-        athlete_weight_lb = weight_history[-1]["peso_lb"]
-        athlete_weight_kg = weight_history[-1]["peso_kg"]
+        # Fase = % de déficit/superávit — se obtiene ANTES de resolver el
+        # peso porque, si el atleta no actualizó su peso esta semana, el
+        # último peso conocido guardado aquí es el fallback que se usa
+        # para igual generarle el plan (ver más abajo).
+        phase_state = get_phase_state(
+            athlete_id, default_deficit_pct=get_initial_deficit_pct(objetivo),
+            peso_inicial_lb=athlete_prefs.get("peso_inicial_lb"),
+            fecha_inicio=athlete_prefs.get("fecha_inicio_manual") or athlete_prefs.get("fecha_inicio_timestamp"),
+        )
+
+        peso_desactualizado = not weight_history
+        if weight_history:
+            athlete_weight_lb = weight_history[-1]["peso_lb"]
+            athlete_weight_kg = weight_history[-1]["peso_kg"]
+            fecha_peso_actual = weight_history[-1]["fecha"]
+        else:
+            # No actualizó su peso esta semana (ventana de 6 semanas vacía en
+            # TrainingPeaks). Antes esto omitía al atleta por completo y se
+            # quedaba SIN plan — ahora se usa el último peso conocido que le
+            # guardamos en una corrida anterior (o el peso inicial del sheet
+            # si es la primerísima corrida) para generar y enviar el plan
+            # igual, solo avisando que el peso está desactualizado.
+            athlete_weight_lb = phase_state.get("ultimo_peso_lb") or phase_state.get("peso_inicial_lb") \
+                or athlete_prefs.get("peso_inicial_lb")
+            athlete_weight_kg = phase_state.get("ultimo_peso_kg") or (
+                round(athlete_weight_lb / 2.20462, 2) if athlete_weight_lb else None
+            )
+            fecha_peso_actual = phase_state.get("ultimo_peso_fecha") or phase_state.get("fecha_inicio")
+
+            if not athlete_weight_lb:
+                print(f"[SKIP] {athlete_name}: sin historial de peso en TrainingPeaks y sin ningún "
+                      f"peso previo guardado — no hay con qué calcular el plan todavía.")
+                return {"nombre": athlete_name, "status": "omitido", "detalle": "sin ningún dato de peso (ni actual ni previo)"}
+
+            print(f"  [AVISO] {athlete_name} no actualizó su peso esta semana — se usa el último peso "
+                  f"conocido ({athlete_weight_lb}lbs, del {fecha_peso_actual}) para generar el plan igual.")
 
         # 2. Gasto calórico estimado por sesión (usa FTP si tiene potómetro)
         tiene_potometro = athlete_prefs.get("tiene_potometro", False)
@@ -118,17 +150,36 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
             altura_cm = 170  # fallback si el atleta no puso su altura en el form
             print(f"  [AVISO] {athlete_name} no tiene altura válida en el sheet, usando 170cm por defecto.")
 
-        objetivo = athlete_prefs.get("objetivo")
+        # 3. Si es la primerísima corrida de este atleta, phase_state todavía
+        # no tiene peso_inicial_lb guardado (recién se creó arriba) — se
+        # completa aquí con el peso ya resuelto (real o de fallback).
+        if not phase_state.get("peso_inicial_lb"):
+            phase_state["peso_inicial_lb"] = athlete_weight_lb
 
-        # 3. Fase = % de déficit/superávit (no un número de kcal fijo).
-        # Si es atleta nuevo, arranca en el % inicial según objetivo.
-        phase_state = get_phase_state(
-            athlete_id, default_deficit_pct=get_initial_deficit_pct(objetivo),
-            peso_inicial_lb=athlete_prefs.get("peso_inicial_lb") or athlete_weight_lb,
-            fecha_inicio=athlete_prefs.get("fecha_inicio_manual") or athlete_prefs.get("fecha_inicio_timestamp"),
-        )
+        # Guarda el último peso REAL conocido (solo cuando TrainingPeaks sí
+        # trajo datos esta semana) — así, si la próxima semana el atleta no
+        # actualiza su peso, hay algo más reciente que el peso inicial para
+        # usar de fallback en vez de tener que omitirlo.
+        if weight_history:
+            phase_state["ultimo_peso_lb"] = athlete_weight_lb
+            phase_state["ultimo_peso_kg"] = athlete_weight_kg
+            phase_state["ultimo_peso_fecha"] = fecha_peso_actual
+
+        # update_phase() arma un dict nuevo cuando el % de fase cambia (ver
+        # phase_engine.py) y ese dict nuevo no carga campos "extra" como los
+        # de arriba (ni "ultimos_alimentos") — se perderían justo la semana
+        # en que cambia la fase. Se guardan aparte y se reinyectan después.
+        campos_extra_antes = {
+            "ultimo_peso_lb": phase_state.get("ultimo_peso_lb"),
+            "ultimo_peso_kg": phase_state.get("ultimo_peso_kg"),
+            "ultimo_peso_fecha": phase_state.get("ultimo_peso_fecha"),
+            "ultimos_alimentos": phase_state.get("ultimos_alimentos"),
+        }
         pct_antes = phase_state["deficit_pct"]
         phase_state, reason = update_phase(weight_history, phase_state, objetivo=objetivo)
+        for campo, valor in campos_extra_antes.items():
+            if valor is not None:
+                phase_state[campo] = valor
 
         # 4. TDEE y kcal objetivo de CADA día por separado — cada día usa su
         # propio gasto real de entreno, no un promedio semanal repartido.
@@ -156,7 +207,7 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         # fila nueva al historial (igual que las filas F1, F2... de tu PDF)
         if not phase_state.get("historial") or phase_state["deficit_pct"] != pct_antes:
             phase_state = append_historial_entry(
-                phase_state, fecha=weight_history[-1]["fecha"], peso_lb=athlete_weight_lb,
+                phase_state, fecha=fecha_peso_actual, peso_lb=athlete_weight_lb,
                 deficit_pct=phase_state["deficit_pct"], kcal_promedio_semana=kcal_promedio_semana,
                 objetivo_label=objetivo_label(objetivo), razon=reason,
             )
@@ -318,7 +369,7 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
             "peso_inicial_lb": round(phase_state.get("peso_inicial_lb", athlete_weight_lb), 1),
             "fecha_inicio": phase_state["fecha_inicio"],
             "peso_actual_lb": round(athlete_weight_lb, 1),
-            "fecha_actual": weight_history[-1]["fecha"],
+            "fecha_actual": fecha_peso_actual,
             "historial": phase_state.get("historial", []),
         }
         phase_info_for_pdf = {
@@ -340,11 +391,13 @@ def process_athlete(page, athlete_prefs, db, send_email=True, feedback_por_email
         # 7. Envío por correo
         if not send_email:
             print(f"  [MODO PRUEBA] PDF generado en {pdf_path} — NO se envió correo.")
-            return {"nombre": athlete_name, "status": "prueba", "detalle": f"PDF generado en {pdf_path}, no se envió (modo prueba)"}
+            aviso_peso = " (peso desactualizado, no lo registró esta semana)" if peso_desactualizado else ""
+            return {"nombre": athlete_name, "status": "prueba", "detalle": f"PDF generado en {pdf_path}, no se envió (modo prueba){aviso_peso}"}
         elif athlete_email:
             send_weekly_plan_email(athlete_name, athlete_email, pdf_path, week_label)
             print(f"  Enviado a {athlete_email}")
-            return {"nombre": athlete_name, "status": "enviado", "detalle": athlete_email}
+            aviso_peso = " (peso desactualizado, no lo registró esta semana)" if peso_desactualizado else ""
+            return {"nombre": athlete_name, "status": "enviado", "detalle": f"{athlete_email}{aviso_peso}"}
         else:
             print(f"  [AVISO] {athlete_name} no tiene email en el sheet, no se envió.")
             return {"nombre": athlete_name, "status": "omitido", "detalle": "sin email en el sheet"}
